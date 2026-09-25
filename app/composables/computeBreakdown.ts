@@ -81,7 +81,7 @@ function computeItem(
       const rate = rates[f.rate] || 0
       amount = size * rate
       rateDetail = rateDetail || `${formatINR(rate)} per sq. ft.`
-      calculation = `${formatINR(rate)} × ${size.toLocaleString('en-IN')} sq. ft.`
+      calculation = size > 0 && rate > 0 ? `${formatINR(rate)} × ${size.toLocaleString('en-IN')}` : '—'
       break
     }
     case 'perSqftPerFloor': {
@@ -89,14 +89,16 @@ function computeItem(
       const floors = rates[f.floors] || 0
       amount = size * rate * floors
       rateDetail = rateDetail || `${formatINR(rate)} per sq. ft. × ${floors} floor${floors === 1 ? '' : 's'}`
-      calculation = `${formatINR(rate)} × ${size.toLocaleString('en-IN')} sq. ft. × ${floors} floor${floors === 1 ? '' : 's'}`
+      calculation = rate > 0 && floors > 0 && size > 0
+        ? `${formatINR(rate)} × ${size.toLocaleString('en-IN')} × ${floors} floors`
+        : 'No floor rise'
       break
     }
     case 'fixed': {
       const rate = rates[f.rate] || 0
       amount = rate
       rateDetail = rateDetail || `Fixed ${formatINR(rate)}`
-      calculation = `Fixed amount`
+      calculation = 'Fixed'
       break
     }
     case 'percentOf': {
@@ -107,7 +109,7 @@ function computeItem(
         : size * (rates.maintenancePerSqft || 0)
       amount = baseAmount * rate
       rateDetail = rateDetail || `${formatPercent(rate)} of ${baseLabel(f.base)}`
-      calculation = `${formatPercent(rate)} × ${formatINR(baseAmount)} (${baseLabel(f.base)})`
+      calculation = baseAmount > 0 ? `${formatPercent(rate)} of ${formatINR(baseAmount)}` : '—'
       break
     }
   }

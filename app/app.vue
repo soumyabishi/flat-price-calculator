@@ -8,6 +8,14 @@ import {
 } from '~/composables/useCalculatorConfig'
 import { computeBreakdown, formatINR } from '~/composables/computeBreakdown'
 
+useHead({
+  title: 'FlatBuy — All-inclusive cost calculator',
+  htmlAttrs: { lang: 'en' },
+  link: [
+    { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
+  ],
+})
+
 const rates = reactive<Rates>({ ...DEFAULT_RATES })
 const items = ref<LineItem[]>(DEFAULT_ITEMS.map(i => ({ ...i, formula: { ...i.formula } })))
 
@@ -62,11 +70,24 @@ function toggleCategory(key: string) {
 
 <template>
   <div class="min-h-screen bg-default text-default">
-    <UContainer class="py-8 sm:py-10 max-w-6xl">
+    <UContainer class="py-8 sm:py-10 max-w-4xl">
       <header class="mb-8">
-        <h1 class="text-3xl sm:text-4xl font-bold text-highlighted">
-          All-inclusive cost calculator
-        </h1>
+        <div class="flex items-start justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <div class="flex items-center justify-center size-11 rounded-xl bg-primary text-inverted shrink-0">
+              <UIcon name="i-ph-buildings" class="size-6" />
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-semibold tracking-wide text-muted uppercase">FlatBuy</span>
+                <UBadge color="neutral" variant="subtle" size="sm">Calculator</UBadge>
+              </div>
+              <h1 class="text-2xl sm:text-3xl font-bold text-highlighted leading-tight">
+                All-inclusive cost calculator
+              </h1>
+            </div>
+          </div>
+        </div>
         <p class="mt-2 text-muted">
           Every charge from booking to handover, in one total. The summary stays pinned while you edit.
         </p>
@@ -79,7 +100,7 @@ function toggleCategory(key: string) {
         size="sm"
       />
 
-      <div class="grid gap-10 lg:grid-cols-2">
+      <div class="grid gap-10 lg:grid-cols-[2fr_3fr]">
         <!-- LEFT: inputs -->
         <div class="space-y-10">
           <!-- Flat configuration -->
@@ -219,18 +240,11 @@ function toggleCategory(key: string) {
                   </span>
                 </summary>
 
-                <div class="pl-6 pr-1 pb-2 space-y-3">
-                  <div v-for="ci in cat.items" :key="ci.item.id" class="flex justify-between gap-4 text-sm">
-                    <div>
-                      <div class="font-medium">{{ ci.item.label }}</div>
-                      <div class="text-xs text-muted">{{ ci.rateDetail }}</div>
-                      <div v-if="ci.item.formula.type !== 'fixed'" class="text-xs text-dimmed mt-0.5 tabular-nums">
-                        {{ ci.calculation }} = <span class="font-medium text-default">{{ formatINR(ci.amount) }}</span>
-                      </div>
-                    </div>
-                    <div class="tabular-nums whitespace-nowrap">
-                      {{ formatINR(ci.amount) }}
-                    </div>
+                <div class="pb-2 space-y-2.5">
+                  <div v-for="ci in cat.items" :key="ci.item.id" class="grid grid-cols-[1fr_auto_auto] items-baseline gap-x-3 text-sm">
+                    <div class="font-medium truncate">{{ ci.item.label }}</div>
+                    <div class="text-xs text-muted tabular-nums whitespace-nowrap">{{ ci.calculation }}</div>
+                    <div class="tabular-nums whitespace-nowrap text-right">{{ formatINR(ci.amount) }}</div>
                   </div>
                   <USeparator />
                   <div class="flex justify-between text-sm text-muted">
