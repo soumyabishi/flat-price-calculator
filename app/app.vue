@@ -8,12 +8,6 @@ import {
 } from '~/composables/useCalculatorConfig'
 import { computeBreakdown, formatINR } from '~/composables/computeBreakdown'
 
-const colorMode = useColorMode()
-const isDark = computed(() => colorMode.value === 'dark')
-function toggleTheme() {
-  colorMode.preference = isDark.value ? 'light' : 'dark'
-}
-
 const rates = reactive<Rates>({ ...DEFAULT_RATES })
 const items = ref<LineItem[]>(DEFAULT_ITEMS.map(i => ({ ...i, formula: { ...i.formula } })))
 
@@ -36,6 +30,13 @@ function resetDefaults() {
 
 function isPercentage(id: string) {
   return ['gstRate', 'stampDutyRate', 'transferDutyRate', 'registrationFeeRate', 'gstOnLegalRate', 'gstOnMaintenanceRate'].includes(id)
+}
+
+function shortUnit(suffix?: string) {
+  if (!suffix) return ''
+  if (suffix === '%') return '%'
+  if (suffix.startsWith('₹')) return suffix === '₹' ? '₹' : '₹ / sq. ft.'
+  return suffix
 }
 
 function formatRate(id: string) {
@@ -72,14 +73,10 @@ function toggleCategory(key: string) {
         <USeparator class="mt-6" />
       </header>
 
-      <UButton
-        class="fixed top-4 right-4 z-50"
-        variant="ghost"
+      <UColorModeSelect
+        class="fixed top-4 right-4 z-50 w-32"
         color="neutral"
         size="sm"
-        :icon="isDark ? 'i-ph-sun' : 'i-ph-moon'"
-        :aria-label="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
-        @click="toggleTheme"
       />
 
       <div class="grid gap-10 lg:grid-cols-2">
@@ -95,22 +92,29 @@ function toggleCategory(key: string) {
               These details are usually the same across flats in a project.
             </p>
 
-            <div class="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
+            <div class="mt-5 grid grid-cols-1 gap-y-5">
               <UFormField
                 v-for="cfg in propertyInputs"
                 :key="cfg.id"
                 :label="cfg.label"
                 :description="cfg.hint"
-                size="md"
+                :size="cfg.id === 'flatSize' || cfg.id === 'basePricePerSqft' ? 'lg' : 'md'"
               >
-                <UInputNumber
-                  v-model="rates[cfg.id]"
-                  :min="0"
-                  :step="1"
-                  :formatOptions="{ maximumFractionDigits: 2 }"
-                  :suffix="cfg.suffix && !cfg.suffix.startsWith('₹') ? ` ${cfg.suffix}` : ''"
-                  class="w-full"
-                />
+                <div class="relative">
+                  <UInputNumber
+                    v-model="rates[cfg.id]"
+                    :min="0"
+                    :step="1"
+                    :increment="false"
+                    :decrement="false"
+                    :formatOptions="{ maximumFractionDigits: 2 }"
+                    :ui="{ base: 'pr-20' }"
+                    class="w-full"
+                  />
+                  <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-muted whitespace-nowrap">
+                    {{ shortUnit(cfg.suffix) }}
+                  </span>
+                </div>
               </UFormField>
             </div>
 
@@ -142,7 +146,7 @@ function toggleCategory(key: string) {
                 <p class="text-sm text-muted mb-4">
                   Statutory rates and possession charges. Defaults match the project sheet; edit only if your quote differs.
                 </p>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5 pb-4">
+                <div class="grid grid-cols-1 gap-y-5 pb-4">
                   <UFormField
                     v-for="cfg in ratesAndFeesInputs"
                     :key="cfg.id"
@@ -150,15 +154,23 @@ function toggleCategory(key: string) {
                     :description="cfg.hint"
                     size="md"
                   >
-                    <UInputNumber
-                      v-model="rates[cfg.id]"
-                      :min="0"
-                      :step="isPercentage(cfg.id) ? 0.005 : 1"
-                      :formatOptions="isPercentage(cfg.id)
-                        ? { maximumFractionDigits: 3 }
-                        : { maximumFractionDigits: 2 }"
-                      class="w-full"
-                    />
+                    <div class="relative">
+                      <UInputNumber
+                        v-model="rates[cfg.id]"
+                        :min="0"
+                        :step="isPercentage(cfg.id) ? 0.005 : 1"
+                        :increment="false"
+                        :decrement="false"
+                        :formatOptions="isPercentage(cfg.id)
+                          ? { maximumFractionDigits: 3 }
+                          : { maximumFractionDigits: 2 }"
+                        :ui="{ base: 'pr-20' }"
+                        class="w-full"
+                      />
+                      <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-muted whitespace-nowrap">
+                        {{ shortUnit(cfg.suffix) }}
+                      </span>
+                    </div>
                   </UFormField>
                 </div>
               </template>
@@ -212,6 +224,9 @@ function toggleCategory(key: string) {
                     <div>
                       <div class="font-medium">{{ ci.item.label }}</div>
                       <div class="text-xs text-muted">{{ ci.rateDetail }}</div>
+                      <div v-if="ci.item.formula.type !== 'fixed'" class="text-xs text-dimmed mt-0.5 tabular-nums">
+                        {{ ci.calculation }} = <span class="font-medium text-default">{{ formatINR(ci.amount) }}</span>
+                      </div>
                     </div>
                     <div class="tabular-nums whitespace-nowrap">
                       {{ formatINR(ci.amount) }}
