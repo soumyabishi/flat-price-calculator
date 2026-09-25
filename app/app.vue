@@ -186,7 +186,8 @@ function toggleCategory(key: string) {
 </script>
 
 <template>
-  <div class="min-h-screen bg-default text-default">
+  <UApp>
+    <div class="min-h-screen bg-default text-default">
     <UContainer class="py-8 sm:py-10 max-w-4xl">
       <header class="mb-8">
         <div class="flex items-start justify-between gap-4">
@@ -472,34 +473,43 @@ function toggleCategory(key: string) {
 
                 <div class="pb-2 space-y-1.5">
                   <template v-for="ci in cat.items" :key="ci.item.id">
-                    <!-- GST-on-x sub-items render with arrow -->
-                    <div
-                      v-if="ci.item.id === 'gst-legal' || ci.item.id === 'gst-maintenance'"
-                      class="group/item flex items-center justify-between gap-4 text-sm rounded-md cursor-pointer transition-colors hover:bg-elevated/60 ps-5"
-                      :title="`Edit ${ci.item.label} rate`"
-                      @click="editFieldFor(ci.item.id)"
+                    <UTooltip
+                      :delay-duration="0"
+                      :content="{ side: 'left', align: 'center', sideOffset: 6 }"
                     >
-                      <div class="min-w-0 text-muted">
-                        <span class="mr-1">↳</span>
-                        <span class="font-medium">{{ ci.item.label }}</span>
-                        <span class="tabular-nums"> ({{ formatPercent(ci.item.id === 'gst-legal' ? rates.gstOnLegalRate : rates.gstOnMaintenanceRate) }} of {{ formatINR(ci.item.id === 'gst-legal' ? rates.legalFeeFixed : rates.maintenancePerSqft * rates.flatSize * rates.maintenanceMonths) }})</span>
+                      <!-- GST-on-x sub-items render with arrow -->
+                      <div
+                        v-if="ci.item.id === 'gst-legal' || ci.item.id === 'gst-maintenance'"
+                        class="group/item flex items-center justify-between gap-4 text-sm rounded-md cursor-pointer transition-colors hover:bg-elevated/60 ps-5"
+                        @click="editFieldFor(ci.item.id)"
+                      >
+                        <div class="min-w-0 text-muted">
+                          <span class="mr-1">↳</span>
+                          <span class="font-medium">{{ ci.item.label }}</span>
+                          <span class="tabular-nums"> ({{ formatPercent(ci.item.id === 'gst-legal' ? rates.gstOnLegalRate : rates.gstOnMaintenanceRate) }} of {{ formatINR(ci.item.id === 'gst-legal' ? rates.legalFeeFixed : rates.maintenancePerSqft * rates.flatSize * rates.maintenanceMonths) }})</span>
+                        </div>
+                        <div class="tabular-nums whitespace-nowrap text-right">{{ formatINR(ci.amount) }}</div>
                       </div>
-                      <div class="tabular-nums whitespace-nowrap text-right">{{ formatINR(ci.amount) }}</div>
-                    </div>
 
-                    <!-- normal rows -->
-                    <div
-                      v-else
-                      class="group/item flex items-baseline justify-between gap-4 text-sm rounded-md cursor-pointer transition-colors hover:bg-elevated/60"
-                      :title="`Edit ${ci.item.label} rate`"
-                      @click="editFieldFor(ci.item.id)"
-                    >
-                      <div class="min-w-0">
-                        <span class="font-medium underline decoration-transparent underline-offset-2 transition-colors group-hover/item:decoration-current">{{ ci.item.label }}</span>
-                        <span v-if="ci.calculation && ci.calculation !== 'Fixed' && !ci.calculation.startsWith('No') && ci.calculation !== '—'" class="text-muted tabular-nums"> ({{ ci.calculation.replace(/^₹/, '') }})</span>
+                      <!-- normal rows -->
+                      <div
+                        v-else
+                        class="group/item flex items-baseline justify-between gap-4 text-sm rounded-md cursor-pointer transition-colors hover:bg-elevated/60"
+                        @click="editFieldFor(ci.item.id)"
+                      >
+                        <div class="min-w-0">
+                          <span class="font-medium underline decoration-transparent underline-offset-2 transition-colors group-hover/item:decoration-current">{{ ci.item.label }}</span>
+                          <span v-if="ci.calculation && ci.calculation !== 'Fixed' && !ci.calculation.startsWith('No') && ci.calculation !== '—'" class="text-xs text-muted tabular-nums"> ({{ ci.calculation.replace(/^₹/, '') }})</span>
+                        </div>
+                        <div class="tabular-nums whitespace-nowrap text-right">{{ formatINR(ci.amount) }}</div>
                       </div>
-                      <div class="tabular-nums whitespace-nowrap text-right">{{ formatINR(ci.amount) }}</div>
-                    </div>
+                      <template #content>
+                        <span class="flex items-center gap-1.5">
+                          <UIcon name="i-ph-pencil-simple-line" class="size-3.5" />
+                          Edit
+                        </span>
+                      </template>
+                    </UTooltip>
                   </template>
                   <USeparator />
                   <div class="flex justify-between text-sm text-muted">
@@ -539,5 +549,6 @@ function toggleCategory(key: string) {
         </div>
       </div>
     </UContainer>
-  </div>
+    </div>
+  </UApp>
 </template>
