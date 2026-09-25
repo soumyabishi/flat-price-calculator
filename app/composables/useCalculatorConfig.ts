@@ -16,6 +16,7 @@ export type RateFieldId =
   | 'corpusFundPerSqft'
   | 'maintenancePerSqft'
   | 'gstOnMaintenanceRate'
+  | 'maintenanceMonths'
 
 export type RateConfig = {
   id: RateFieldId
@@ -29,6 +30,7 @@ export type RateConfig = {
 export type Formula =
   | { type: 'perSqft'; rate: RateFieldId }
   | { type: 'perSqftPerFloor'; rate: RateFieldId; floors: RateFieldId }
+  | { type: 'perSqftPerMonths'; rate: RateFieldId; months: RateFieldId }
   | { type: 'fixed'; rate: RateFieldId }
   | { type: 'percentOf'; rate: RateFieldId; base: 'flatValue' | 'legal' | 'maintenance' }
 
@@ -39,7 +41,16 @@ export type LineItem = {
   timing: string
   formula: Formula
   rateDetail?: string
+  /** When true, this item only applies for under-construction properties */
+  underConstructionOnly?: boolean
 }
+
+export type PossessionStatus = 'underConstruction' | 'readyToMove'
+
+export const POSSESSION_OPTIONS: { label: string; value: PossessionStatus; hint: string }[] = [
+  { label: 'Under construction', value: 'underConstruction', hint: 'GST applies on property cost' },
+  { label: 'Ready to move', value: 'readyToMove', hint: 'No GST on property cost' },
+]
 
 export type Rates = Record<RateFieldId, number>
 
@@ -61,6 +72,7 @@ export const DEFAULT_RATES: Rates = {
   corpusFundPerSqft: 50,
   maintenancePerSqft: 72,
   gstOnMaintenanceRate: 0.18,
+  maintenanceMonths: 24,
 }
 
 export const RATE_CONFIGS: RateConfig[] = [
@@ -79,8 +91,9 @@ export const RATE_CONFIGS: RateConfig[] = [
   { id: 'legalFeeFixed', label: 'Legal / documentation fee', kind: 'fixed', suffix: '₹', group: 'handover' },
   { id: 'gstOnLegalRate', label: 'GST on legal fees', kind: 'rate', suffix: '%', group: 'handover' },
   { id: 'corpusFundPerSqft', label: 'Corpus fund per sq. ft.', kind: 'sqft', suffix: '₹ / sq. ft.', group: 'handover' },
-  { id: 'maintenancePerSqft', label: 'Maintenance per sq. ft.', hint: '24 months', kind: 'sqft', suffix: '₹ / sq. ft.', group: 'handover' },
+  { id: 'maintenancePerSqft', label: 'Maintenance per sq. ft.', kind: 'sqft', suffix: '₹ / sq. ft.', group: 'handover' },
   { id: 'gstOnMaintenanceRate', label: 'GST on maintenance', kind: 'rate', suffix: '%', group: 'handover' },
+  { id: 'maintenanceMonths', label: 'Maintenance period', kind: 'rate', suffix: 'months', group: 'handover' },
 ]
 
 export const DEFAULT_ITEMS: LineItem[] = [
@@ -90,14 +103,14 @@ export const DEFAULT_ITEMS: LineItem[] = [
   { id: 'facing-premium', label: 'Facing Premium', category: 'property', timing: 'Milestones', formula: { type: 'perSqft', rate: 'facingPremiumPerSqft' } },
   { id: 'floor-rise', label: 'Floor Rise Charges', category: 'property', timing: 'Milestones', formula: { type: 'perSqftPerFloor', rate: 'floorRisePerSqft', floors: 'floorRiseFloors' } },
   { id: 'view-premium', label: 'View Premium', category: 'property', timing: 'Milestones', formula: { type: 'perSqft', rate: 'viewPremiumPerSqft' }, rateDetail: 'Corner / Park / ORR facing' },
-  { id: 'gst', label: 'GST', category: 'taxes', timing: 'Milestones', formula: { type: 'percentOf', rate: 'gstRate', base: 'flatValue' } },
+  { id: 'gst', label: 'GST', category: 'taxes', timing: 'Milestones', formula: { type: 'percentOf', rate: 'gstRate', base: 'flatValue' }, underConstructionOnly: true },
   { id: 'stamp-duty', label: 'Stamp Duty', category: 'taxes', timing: 'Registration Day', formula: { type: 'percentOf', rate: 'stampDutyRate', base: 'flatValue' } },
   { id: 'transfer-duty', label: 'Transfer Duty', category: 'taxes', timing: 'Registration Day', formula: { type: 'percentOf', rate: 'transferDutyRate', base: 'flatValue' } },
   { id: 'registration-fee', label: 'Registration Fee', category: 'taxes', timing: 'Registration Day', formula: { type: 'percentOf', rate: 'registrationFeeRate', base: 'flatValue' } },
   { id: 'legal-fee', label: 'Legal / Documentation Charges', category: 'handover', timing: 'Handover', formula: { type: 'fixed', rate: 'legalFeeFixed' } },
   { id: 'gst-legal', label: 'GST on Legal Fees', category: 'handover', timing: 'Handover', formula: { type: 'percentOf', rate: 'gstOnLegalRate', base: 'legal' } },
   { id: 'corpus-fund', label: 'Corpus Fund', category: 'handover', timing: 'Handover', formula: { type: 'perSqft', rate: 'corpusFundPerSqft' } },
-  { id: 'maintenance', label: 'Maintenance Charges (24 months)', category: 'handover', timing: 'Handover', formula: { type: 'perSqft', rate: 'maintenancePerSqft' } },
+  { id: 'maintenance', label: 'Maintenance Charges', category: 'handover', timing: 'Handover', formula: { type: 'perSqftPerMonths', rate: 'maintenancePerSqft', months: 'maintenanceMonths' } },
   { id: 'gst-maintenance', label: 'GST on Maintenance', category: 'handover', timing: 'Handover', formula: { type: 'percentOf', rate: 'gstOnMaintenanceRate', base: 'maintenance' } },
 ]
 

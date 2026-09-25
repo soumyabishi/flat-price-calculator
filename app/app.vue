@@ -2,11 +2,15 @@
 import {
   DEFAULT_ITEMS,
   DEFAULT_RATES,
+  POSSESSION_OPTIONS,
   RATE_CONFIGS,
   type LineItem,
+  type PossessionStatus,
   type Rates,
 } from '~/composables/useCalculatorConfig'
 import { computeBreakdown, formatINR } from '~/composables/computeBreakdown'
+
+const possessionStatus = ref<PossessionStatus>('underConstruction')
 
 useHead({
   title: 'FlatBuy — All-inclusive cost calculator',
@@ -19,10 +23,25 @@ useHead({
 const rates = reactive<Rates>({ ...DEFAULT_RATES })
 const items = ref<LineItem[]>(DEFAULT_ITEMS.map(i => ({ ...i, formula: { ...i.formula } })))
 
-const result = computed(() => computeBreakdown(rates, items.value))
+const result = computed(() => computeBreakdown(rates, items.value, possessionStatus.value))
 
 const propertyInputs = RATE_CONFIGS.filter(c => c.group === 'property')
 const ratesAndFeesInputs = RATE_CONFIGS.filter(c => c.group !== 'property')
+
+const rateFieldGroups = [
+  {
+    key: 'taxes',
+    label: 'Taxes & government fees',
+    icon: 'i-ph-bank',
+    fields: RATE_CONFIGS.filter(c => c.group === 'taxes'),
+  },
+  {
+    key: 'handover',
+    label: 'Handover charges',
+    icon: 'i-ph-key',
+    fields: RATE_CONFIGS.filter(c => c.group === 'handover'),
+  },
+]
 
 const rateFieldsOpen = ref(false)
 const collapsed = reactive<Record<string, boolean>>({
@@ -70,7 +89,7 @@ function toggleCategory(key: string) {
 
 <template>
   <div class="min-h-screen bg-default text-default">
-    <UContainer class="py-8 sm:py-10 max-w-4xl">
+    <UContainer class="py-8 sm:py-10 max-w-5xl">
       <header class="mb-8">
         <div class="flex items-start justify-between gap-4">
           <div class="flex items-center gap-3">
@@ -113,6 +132,20 @@ function toggleCategory(key: string) {
               These details are usually the same across flats in a project.
             </p>
 
+            <UFormField label="Possession status" size="md" class="mt-5">
+              <URadioGroup
+                v-model="possessionStatus"
+                :items="POSSESSION_OPTIONS"
+                variant="card"
+                orientation="horizontal"
+                :ui="{
+                  fieldset: 'w-full gap-x-3',
+                  item: 'flex-1 rounded-lg px-3 py-2.5',
+                  wrapper: 'w-full',
+                }"
+              />
+            </UFormField>
+
             <div class="mt-5 grid grid-cols-1 gap-y-5">
               <UFormField
                 v-for="cfg in propertyInputs"
@@ -128,6 +161,7 @@ function toggleCategory(key: string) {
                     :step="1"
                     :increment="false"
                     :decrement="false"
+                    disable-wheel-change
                     :formatOptions="{ maximumFractionDigits: 2 }"
                     :ui="{ base: 'pr-20' }"
                     class="w-full"
@@ -167,32 +201,72 @@ function toggleCategory(key: string) {
                 <p class="text-sm text-muted mb-4">
                   Statutory rates and possession charges. Defaults match the project sheet; edit only if your quote differs.
                 </p>
-                <div class="grid grid-cols-1 gap-y-5 pb-4">
-                  <UFormField
-                    v-for="cfg in ratesAndFeesInputs"
-                    :key="cfg.id"
-                    :label="cfg.label"
-                    :description="cfg.hint"
-                    size="md"
+
+                <div class="space-y-6 pb-4">
+                  <div
+                    v-for="group in rateFieldGroups"
+                    :key="group.key"
+                    class="rounded-lg border border-default p-4"
                   >
-                    <div class="relative">
-                      <UInputNumber
-                        v-model="rates[cfg.id]"
-                        :min="0"
-                        :step="isPercentage(cfg.id) ? 0.005 : 1"
-                        :increment="false"
-                        :decrement="false"
-                        :formatOptions="isPercentage(cfg.id)
-                          ? { maximumFractionDigits: 3 }
-                          : { maximumFractionDigits: 2 }"
-                        :ui="{ base: 'pr-20' }"
-                        class="w-full"
-                      />
-                      <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-muted whitespace-nowrap">
-                        {{ shortUnit(cfg.suffix) }}
-                      </span>
+                    <div class="flex items-center gap-2 mb-4">
+                      <UIcon :name="group.icon" class="size-4 text-muted" />
+                      <h4 class="text-sm font-semibold">{{ group.label }}</h4>
                     </div>
-                  </UFormField>
+                    <div class="space-y-5">
+                      <UFormField
+                        v-for="cfg in group.fields"
+                        :key="cfg.id"
+                        :label="cfg.label"
+                        :description="cfg.hint"
+                        size="md"
+                      >
+                        <template v-if="cfg.id === 'maintenanceMonths'">
+                          <div class="flex flex-wrap items-center gap-2">
+                            <UButton
+                              v-for="opt in [12, 24, 36, 48]"
+                              :key="opt"
+                              size="sm"
+                              :variant="rates.maintenanceMonths === opt ? 'solid' : 'outline'"
+                              color="neutral"
+                              @click="rates.maintenanceMonths = opt"
+                            >
+                              {{ opt / 12 }} yr{{ opt === 12 ? '' : 's' }}
+                            </UButton>
+                            <UInputNumber
+                              v-model="rates.maintenanceMonths"
+                              :min="0"
+                              :step="1"
+                              :increment="false"
+                              :decrement="false"
+                              disable-wheel-change
+                              :formatOptions="{ maximumFractionDigits: 0 }"
+                              :ui="{ base: 'pr-20' }"
+                              class="w-36"
+                            />
+                            <span class="text-xs text-muted whitespace-nowrap">months</span>
+                          </div>
+                        </template>
+                        <div v-else class="relative">
+                          <UInputNumber
+                            v-model="rates[cfg.id]"
+                            :min="0"
+                            :step="isPercentage(cfg.id) ? 0.005 : 1"
+                            :increment="false"
+                            :decrement="false"
+                            disable-wheel-change
+                            :formatOptions="isPercentage(cfg.id)
+                              ? { maximumFractionDigits: 3 }
+                              : { maximumFractionDigits: 2 }"
+                            :ui="{ base: 'pr-20' }"
+                            class="w-full"
+                          />
+                          <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-muted whitespace-nowrap">
+                            {{ shortUnit(cfg.suffix) }}
+                          </span>
+                        </div>
+                      </UFormField>
+                    </div>
+                  </div>
                 </div>
               </template>
             </UCollapsible>

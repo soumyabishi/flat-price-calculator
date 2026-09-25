@@ -1,4 +1,4 @@
-import type { LineItem, Rates } from './useCalculatorConfig'
+import type { LineItem, PossessionStatus, Rates } from './useCalculatorConfig'
 import { DEFAULT_ITEMS } from './useCalculatorConfig'
 
 export function formatINR(value: number, opts: { compact?: boolean } = {}): string {
@@ -39,9 +39,14 @@ export type ComputedResult = {
   grandTotal: number
 }
 
-export function computeBreakdown(rates: Rates, items: LineItem[] = DEFAULT_ITEMS): ComputedResult {
+export function computeBreakdown(
+  rates: Rates,
+  items: LineItem[] = DEFAULT_ITEMS,
+  possessionStatus: PossessionStatus = 'underConstruction',
+): ComputedResult {
   const size = rates.flatSize || 0
-  const flatValue = items
+  const activeItems = items.filter(i => !i.underConstructionOnly || possessionStatus === 'underConstruction')
+  const flatValue = activeItems
     .filter(i => i.category === 'property')
     .reduce((sum, i) => sum + computeItem(i, rates, size).amount, 0)
 
@@ -49,7 +54,7 @@ export function computeBreakdown(rates: Rates, items: LineItem[] = DEFAULT_ITEMS
   let grandTotal = 0
 
   for (const key of ['property', 'taxes', 'handover'] as const) {
-    const catItems = items
+    const catItems = activeItems
       .filter(i => i.category === key)
       .map(i => computeItem(i, rates, size, flatValue))
     const subtotal = catItems.reduce((s, c) => s + c.amount, 0)
@@ -94,6 +99,16 @@ function computeItem(
         : 'No floor rise'
       break
     }
+    case 'perSqftPerMonths': {
+      const rate = rates[f.rate] || 0
+      const months = rates[f.months] || 0
+      amount = size * rate * months
+      rateDetail = rateDetail || `${formatINR(rate)} per sq. ft. × ${months} months`
+      calculation = rate > 0 && months > 0 && size > 0
+        ? `${formatINR(rate)} × ${size.toLocaleString('en-IN')} × ${months} months`
+        : '—'
+      break
+    }
     case 'fixed': {
       const rate = rates[f.rate] || 0
       amount = rate
@@ -106,7 +121,7 @@ function computeItem(
       const baseAmount =
         f.base === 'flatValue' ? flatValue
         : f.base === 'legal' ? rates.legalFeeFixed || 0
-        : size * (rates.maintenancePerSqft || 0)
+        : size * (rates.maintenancePerSqft || 0) * (rates.maintenanceMonths || 0)
       amount = baseAmount * rate
       rateDetail = rateDetail || `${formatPercent(rate)} of ${baseLabel(f.base)}`
       calculation = baseAmount > 0 ? `${formatPercent(rate)} of ${formatINR(baseAmount)}` : '—'
