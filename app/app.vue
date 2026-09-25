@@ -89,7 +89,7 @@ function toggleCategory(key: string) {
 
 <template>
   <div class="min-h-screen bg-default text-default">
-    <UContainer class="py-8 sm:py-10 max-w-5xl">
+    <UContainer class="py-8 sm:py-10 max-w-4xl">
       <header class="mb-8">
         <div class="flex items-start justify-between gap-4">
           <div class="flex items-center gap-3">
@@ -119,7 +119,7 @@ function toggleCategory(key: string) {
         size="sm"
       />
 
-      <div class="grid gap-10 lg:grid-cols-[2fr_3fr]">
+      <div class="grid gap-6 lg:grid-cols-[2fr_3fr]">
         <!-- LEFT: inputs -->
         <div class="space-y-10">
           <!-- Flat configuration -->
@@ -138,6 +138,7 @@ function toggleCategory(key: string) {
                 :items="POSSESSION_OPTIONS"
                 variant="card"
                 orientation="horizontal"
+                size="sm"
                 :ui="{
                   fieldset: 'w-full gap-x-3',
                   item: 'flex-1 rounded-lg px-3 py-2.5',
@@ -152,9 +153,12 @@ function toggleCategory(key: string) {
                 :key="cfg.id"
                 :label="cfg.label"
                 :description="cfg.hint"
-                :size="cfg.id === 'flatSize' || cfg.id === 'basePricePerSqft' ? 'lg' : 'md'"
+                :size="cfg.id === 'flatSize' || cfg.id === 'basePricePerSqft' ? 'xl' : 'md'"
               >
-                <div class="relative">
+                <div
+                  class="relative"
+                  :class="cfg.id === 'flatSize' || cfg.id === 'basePricePerSqft' ? 'max-w-md' : ''"
+                >
                   <UInputNumber
                     v-model="rates[cfg.id]"
                     :min="0"
@@ -163,7 +167,9 @@ function toggleCategory(key: string) {
                     :decrement="false"
                     disable-wheel-change
                     :formatOptions="{ maximumFractionDigits: 2 }"
-                    :ui="{ base: 'pr-20' }"
+                    :ui="cfg.id === 'flatSize' || cfg.id === 'basePricePerSqft'
+                      ? { base: 'pr-24 text-lg/7 px-4 py-2.5 font-medium' }
+                      : { base: 'pr-20' }"
                     class="w-full"
                   />
                   <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-muted whitespace-nowrap">
