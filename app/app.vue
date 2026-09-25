@@ -124,7 +124,7 @@ function resetDefaults() {
 }
 
 function isPercentage(id: string) {
-  return ['gstRate', 'stampDutyRate', 'transferDutyRate', 'registrationFeeRate', 'gstOnLegalRate', 'gstOnMaintenanceRate'].includes(id)
+  return ['gstRate', 'stampDutyRate', 'transferDutyRate', 'registrationFeeRate', 'gstOnLegalRate', 'gstOnMaintenanceRate', 'basePriceDiscountPct'].includes(id)
 }
 
 function shortUnit(suffix?: string) {
@@ -167,6 +167,21 @@ const donutSegments = computed(() => {
     accumulated += pct
     return seg
   })
+})
+
+const discountDelta = computed(() => {
+  const discountPct = rates.basePriceDiscountPct || 0
+  if (discountPct <= 0) return 0
+  // Gross (undiscounted) totals: recompute with discount = 0
+  const gross = computeBreakdown({ ...rates, basePriceDiscountPct: 0 }, items.value, possessionStatus.value).grandTotal
+  const net = result.value.grandTotal
+  return net - gross
+})
+
+const discountPct = computed(() => {
+  const gross = computeBreakdown({ ...rates, basePriceDiscountPct: 0 }, items.value, possessionStatus.value).grandTotal
+  if (!gross) return 0
+  return (discountDelta.value / gross) * 100
 })
 
 const donutCompact = computed(() => {
@@ -265,11 +280,13 @@ function toggleCategory(key: string) {
                   <UInputNumber
                     v-model="rates[cfg.id]"
                     :min="0"
-                    :step="1"
+                    :step="isPercentage(cfg.id) ? 0.005 : 1"
                     :increment="false"
                     :decrement="false"
                     disable-wheel-change
-                    :formatOptions="{ maximumFractionDigits: 2 }"
+                    :formatOptions="isPercentage(cfg.id)
+                      ? { maximumFractionDigits: 3 }
+                      : { maximumFractionDigits: 2 }"
                     :ui="cfg.id === 'flatSize' || cfg.id === 'basePricePerSqft'
                       ? { base: 'pr-24 text-lg/7 px-4 py-2.5 font-medium' }
                       : { base: 'pr-20' }"
@@ -400,8 +417,22 @@ function toggleCategory(key: string) {
             <div class="mt-1 text-4xl sm:text-5xl font-bold tabular-nums tracking-tight">
               {{ formatINR(animatedTotal) }}
             </div>
-            <div class="mt-1 text-sm text-muted">
-              All-inclusive · {{ grandTotalCompact }}
+            <div class="mt-1.5 flex items-center gap-3">
+              <span class="text-sm text-muted">All-inclusive · {{ grandTotalCompact }}</span>
+
+              <!-- Discount delta badge -->
+              <UBadge
+                v-if="discountDelta !== 0"
+                :color="discountDelta < 0 ? 'success' : 'warning'"
+                variant="subtle"
+                size="md"
+                class="shrink-0 tabular-nums text-sm font-semibold"
+              >
+                <span class="flex items-center gap-1.5">
+                  <UIcon :name="discountDelta < 0 ? 'i-ph-arrow-bend-down-right' : 'i-ph-arrow-bend-up-right'" class="size-3.5" />
+                  {{ discountDelta < 0 ? '−' : '+' }}{{ formatINR(Math.abs(discountDelta)) }} ({{ Math.abs(discountPct).toFixed(1) }}%)
+                </span>
+              </UBadge>
             </div>
 
             <!-- Donut breakdown -->
