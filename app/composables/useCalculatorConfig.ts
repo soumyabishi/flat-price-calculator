@@ -1,6 +1,7 @@
 export type RateFieldId =
   | 'flatSize'
   | 'basePricePerSqft'
+  | 'basePriceDiscountPct'
   | 'amenitiesPerSqft'
   | 'carParkingFixed'
   | 'facingPremiumPerSqft'
@@ -57,6 +58,7 @@ export type Rates = Record<RateFieldId, number>
 export const DEFAULT_RATES: Rates = {
   flatSize: 1200,
   basePricePerSqft: 7299,
+  basePriceDiscountPct: 0,
   amenitiesPerSqft: 350,
   carParkingFixed: 300000,
   facingPremiumPerSqft: 50,
@@ -78,6 +80,7 @@ export const DEFAULT_RATES: Rates = {
 export const RATE_CONFIGS: RateConfig[] = [
   { id: 'flatSize', label: 'Flat size', kind: 'sqft', suffix: 'sq. ft.', group: 'property' },
   { id: 'basePricePerSqft', label: 'Base price per sq. ft.', kind: 'sqft', suffix: '₹ / sq. ft.', group: 'property' },
+  { id: 'basePriceDiscountPct', label: 'Discount on base price', hint: 'Percentage discount applied to the base price.', kind: 'rate', suffix: '%', group: 'property' },
   { id: 'amenitiesPerSqft', label: 'Amenities & infra per sq. ft.', kind: 'sqft', suffix: '₹ / sq. ft.', group: 'property' },
   { id: 'carParkingFixed', label: 'Car parking (fixed)', hint: 'Fixed cost for the flat configuration (e.g. 3 BHK, 2 tandem).', kind: 'fixed', suffix: '₹', group: 'property' },
   { id: 'facingPremiumPerSqft', label: 'Facing premium per sq. ft.', hint: 'East / North facing premium.', kind: 'sqft', suffix: '₹ / sq. ft.', group: 'property' },

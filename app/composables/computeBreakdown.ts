@@ -85,8 +85,17 @@ function computeItem(
     case 'perSqft': {
       const rate = rates[f.rate] || 0
       amount = size * rate
-      rateDetail = rateDetail || `${formatINR(rate)} per sq. ft.`
-      calculation = size > 0 && rate > 0 ? `${formatINR(rate)} × ${size.toLocaleString('en-IN')}` : '—'
+      if (f.rate === 'basePricePerSqft' && rates.basePriceDiscountPct > 0) {
+        const discount = amount * rates.basePriceDiscountPct
+        rateDetail = rateDetail || `${formatINR(rate)} per sq. ft. − ${formatPercent(rates.basePriceDiscountPct)} discount`
+        calculation = size > 0 && rate > 0
+          ? `${formatINR(rate)} × ${size.toLocaleString('en-IN')} − ${formatPercent(rates.basePriceDiscountPct)}`
+          : '—'
+        amount -= discount
+      } else {
+        rateDetail = rateDetail || `${formatINR(rate)} per sq. ft.`
+        calculation = size > 0 && rate > 0 ? `${formatINR(rate)} × ${size.toLocaleString('en-IN')}` : '—'
+      }
       break
     }
     case 'perSqftPerFloor': {
