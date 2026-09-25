@@ -6,6 +6,7 @@ import {
   RATE_CONFIGS,
   type LineItem,
   type PossessionStatus,
+  type RateFieldId,
   type Rates,
 } from '~/composables/useCalculatorConfig'
 import { computeBreakdown, formatINR } from '~/composables/computeBreakdown'
@@ -24,6 +25,32 @@ const rates = reactive<Rates>({ ...DEFAULT_RATES })
 const items = ref<LineItem[]>(DEFAULT_ITEMS.map(i => ({ ...i, formula: { ...i.formula } })))
 
 const result = computed(() => computeBreakdown(rates, items.value, possessionStatus.value))
+
+const animatedTotal = ref(0)
+let rafId = 0
+
+watch(() => result.value.grandTotal, (target) => {
+  if (import.meta.server) {
+    animatedTotal.value = target
+    return
+  }
+  cancelAnimationFrame(rafId)
+  const from = animatedTotal.value
+  if (from === target) return
+  const duration = 500
+  const start = performance.now()
+  const tick = (now: number) => {
+    const p = Math.min(1, (now - start) / duration)
+    const eased = 1 - Math.pow(1 - p, 3)
+    animatedTotal.value = Math.round(from + (target - from) * eased)
+    if (p < 1) rafId = requestAnimationFrame(tick)
+  }
+  rafId = requestAnimationFrame(tick)
+}, { immediate: true })
+
+onMounted(() => {
+  animatedTotal.value = result.value.grandTotal
+})
 
 const propertyInputs = RATE_CONFIGS.filter(c => c.group === 'property')
 const ratesAndFeesInputs = RATE_CONFIGS.filter(c => c.group !== 'property')
@@ -49,6 +76,47 @@ const collapsed = reactive<Record<string, boolean>>({
   taxes: true,
   handover: true,
 })
+
+const highlightedField = ref<string | null>(null)
+let highlightTimer: ReturnType<typeof setTimeout> | undefined
+
+const LINE_ITEM_FIELD: Record<string, { field: RateFieldId, collapsible?: boolean, group?: string }> = {
+  'base-price': { field: 'basePricePerSqft' },
+  'amenities': { field: 'amenitiesPerSqft' },
+  'car-parking': { field: 'carParkingFixed' },
+  'facing-premium': { field: 'facingPremiumPerSqft' },
+  'floor-rise': { field: 'floorRisePerSqft' },
+  'view-premium': { field: 'viewPremiumPerSqft' },
+  'gst': { field: 'gstRate', collapsible: true, group: 'taxes' },
+  'stamp-duty': { field: 'stampDutyRate', collapsible: true, group: 'taxes' },
+  'transfer-duty': { field: 'transferDutyRate', collapsible: true, group: 'taxes' },
+  'registration-fee': { field: 'registrationFeeRate', collapsible: true, group: 'taxes' },
+  'legal-fee': { field: 'legalFeeFixed', collapsible: true, group: 'handover' },
+  'gst-legal': { field: 'gstOnLegalRate', collapsible: true, group: 'handover' },
+  'corpus-fund': { field: 'corpusFundPerSqft', collapsible: true, group: 'handover' },
+  'maintenance': { field: 'maintenancePerSqft', collapsible: true, group: 'handover' },
+  'gst-maintenance': { field: 'gstOnMaintenanceRate', collapsible: true, group: 'handover' },
+}
+
+async function editFieldFor(itemId: string) {
+  const mapping = LINE_ITEM_FIELD[itemId]
+  if (!mapping) return
+  if (mapping.collapsible) {
+    rateFieldsOpen.value = true
+    collapsed[mapping.group!] = false
+    await nextTick()
+  }
+  goToField(mapping.field)
+}
+
+function goToField(id: RateFieldId) {
+  const el = document.getElementById(`field-${id}`)
+  if (!el) return
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  highlightedField.value = id
+  clearTimeout(highlightTimer)
+  highlightTimer = setTimeout(() => (highlightedField.value = null), 2500)
+}
 
 function resetDefaults() {
   Object.assign(rates, DEFAULT_RATES)
@@ -156,8 +224,12 @@ function toggleCategory(key: string) {
                 :size="cfg.id === 'flatSize' || cfg.id === 'basePricePerSqft' ? 'xl' : 'md'"
               >
                 <div
-                  class="relative"
-                  :class="cfg.id === 'flatSize' || cfg.id === 'basePricePerSqft' ? 'max-w-md' : ''"
+                  :id="`field-${cfg.id}`"
+                  class="relative transition-all duration-500 rounded-(--ui-radius)"
+                  :class="[
+                    cfg.id === 'flatSize' || cfg.id === 'basePricePerSqft' ? 'max-w-md' : '',
+                    highlightedField === cfg.id ? 'ring-2 ring-primary bg-primary/5' : '',
+                  ]"
                 >
                   <UInputNumber
                     v-model="rates[cfg.id]"
@@ -221,13 +293,18 @@ function toggleCategory(key: string) {
                     <div class="space-y-5">
                       <UFormField
                         v-for="cfg in group.fields"
+                        :id="undefined"
                         :key="cfg.id"
                         :label="cfg.label"
                         :description="cfg.hint"
                         size="md"
                       >
                         <template v-if="cfg.id === 'maintenanceMonths'">
-                          <div class="flex flex-wrap items-center gap-2">
+                          <div
+                            :id="`field-maintenanceMonths`"
+                            class="flex flex-wrap items-center gap-2 transition-all duration-500 rounded-(--ui-radius)"
+                            :class="highlightedField === 'maintenanceMonths' ? 'ring-2 ring-primary bg-primary/5 p-2 -m-2' : ''"
+                          >
                             <UButton
                               v-for="opt in [12, 24, 36, 48]"
                               :key="opt"
@@ -252,7 +329,12 @@ function toggleCategory(key: string) {
                             <span class="text-xs text-muted whitespace-nowrap">months</span>
                           </div>
                         </template>
-                        <div v-else class="relative">
+                        <div
+                          v-else
+                          :id="`field-${cfg.id}`"
+                          class="relative transition-all duration-500 rounded-(--ui-radius)"
+                          :class="highlightedField === cfg.id ? 'ring-2 ring-primary bg-primary/5' : ''"
+                        >
                           <UInputNumber
                             v-model="rates[cfg.id]"
                             :min="0"
@@ -285,7 +367,7 @@ function toggleCategory(key: string) {
           <UCard class="rounded-xl border-default">
             <div class="text-muted">Total flat cost</div>
             <div class="mt-1 text-4xl sm:text-5xl font-bold tabular-nums tracking-tight">
-              {{ formatINR(result.grandTotal) }}
+              {{ formatINR(animatedTotal) }}
             </div>
             <div class="mt-1 text-sm text-muted">
               All-inclusive · {{ grandTotalCompact }}
@@ -321,8 +403,16 @@ function toggleCategory(key: string) {
                 </summary>
 
                 <div class="pb-2 space-y-2.5">
-                  <div v-for="ci in cat.items" :key="ci.item.id" class="grid grid-cols-[1fr_auto_auto] items-baseline gap-x-3 text-sm">
-                    <div class="font-medium truncate">{{ ci.item.label }}</div>
+                  <div
+                    v-for="ci in cat.items"
+                    :key="ci.item.id"
+                    class="group/item grid grid-cols-[1fr_auto_auto] items-baseline gap-x-3 text-sm rounded-md cursor-pointer transition-colors hover:bg-elevated/60"
+                    :title="`Edit ${ci.item.label} rate`"
+                    @click="editFieldFor(ci.item.id)"
+                  >
+                    <div class="font-medium truncate underline decoration-transparent underline-offset-2 transition-colors group-hover/item:decoration-current">
+                      {{ ci.item.label }}
+                    </div>
                     <div class="text-xs text-muted tabular-nums whitespace-nowrap">{{ ci.calculation }}</div>
                     <div class="tabular-nums whitespace-nowrap text-right">{{ formatINR(ci.amount) }}</div>
                   </div>
