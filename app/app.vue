@@ -9,7 +9,7 @@ import {
   type RateFieldId,
   type Rates,
 } from '~/composables/useCalculatorConfig'
-import { computeBreakdown, formatINR } from '~/composables/computeBreakdown'
+import { computeBreakdown, formatINR, formatPercent } from '~/composables/computeBreakdown'
 
 const possessionStatus = ref<PossessionStatus>('underConstruction')
 
@@ -143,6 +143,36 @@ const grandTotalCompact = computed(() => {
   const t = result.value.grandTotal
   if (t >= 1e7) return `${(t / 1e7).toFixed(2)} crore`
   if (t >= 1e5) return `${(t / 1e5).toFixed(2)} lakh`
+  return formatINR(t)
+})
+
+const CATEGORY_COLORS: Record<string, string> = {
+  property: 'var(--ui-color-primary-500)',
+  taxes: 'var(--ui-color-neutral-500)',
+  handover: 'var(--ui-color-primary-300)',
+}
+
+const donutSegments = computed(() => {
+  const total = result.value.grandTotal || 1
+  let accumulated = 0
+  return result.value.categories.map((cat) => {
+    const pct = (cat.subtotal / total) * 100
+    const seg = {
+      key: cat.key,
+      label: cat.key === 'property' ? 'Property' : cat.key === 'taxes' ? 'Taxes & govt fees' : 'Handover',
+      pct,
+      offset: 25 - accumulated,
+      color: CATEGORY_COLORS[cat.key],
+    }
+    accumulated += pct
+    return seg
+  })
+})
+
+const donutCompact = computed(() => {
+  const t = result.value.grandTotal
+  if (t >= 1e7) return `₹${(t / 1e7).toFixed(2)} Cr`
+  if (t >= 1e5) return `₹${(t / 1e5).toFixed(2)} L`
   return formatINR(t)
 })
 
@@ -373,6 +403,44 @@ function toggleCategory(key: string) {
               All-inclusive · {{ grandTotalCompact }}
             </div>
 
+            <!-- Donut breakdown -->
+            <div class="mt-6 flex items-center gap-6">
+              <div class="relative shrink-0">
+                <svg width="128" height="128" viewBox="0 0 42 42" class="-rotate-90">
+                  <circle cx="21" cy="21" r="15.915" fill="none" stroke="var(--ui-bg-accented)" stroke-width="5" />
+                  <circle
+                    v-for="seg in donutSegments"
+                    :key="seg.key"
+                    cx="21"
+                    cy="21"
+                    r="15.915"
+                    fill="none"
+                    :stroke="seg.color"
+                    stroke-width="5"
+                    :stroke-dasharray="`${seg.pct} ${100 - seg.pct}`"
+                    :stroke-dashoffset="seg.offset"
+                    class="transition-all duration-500 ease-out"
+                  />
+                </svg>
+                <div class="absolute inset-0 flex flex-col items-center justify-center">
+                  <div class="text-sm font-bold tabular-nums">{{ donutCompact }}</div>
+                  <div class="text-[10px] uppercase tracking-wide text-muted">Total cost</div>
+                </div>
+              </div>
+
+              <div class="flex-1 space-y-2 min-w-0">
+                <div
+                  v-for="seg in donutSegments"
+                  :key="seg.key"
+                  class="flex items-center gap-2 text-sm"
+                >
+                  <span class="size-2.5 rounded-sm shrink-0" :style="{ backgroundColor: seg.color }" />
+                  <span class="truncate">{{ seg.label }}</span>
+                  <span class="ml-auto tabular-nums text-muted">{{ seg.pct.toFixed(1) }}%</span>
+                </div>
+              </div>
+            </div>
+
             <USeparator class="my-5" />
 
             <div class="space-y-1">
@@ -402,20 +470,37 @@ function toggleCategory(key: string) {
                   </span>
                 </summary>
 
-                <div class="pb-2 space-y-2.5">
-                  <div
-                    v-for="ci in cat.items"
-                    :key="ci.item.id"
-                    class="group/item grid grid-cols-[1fr_auto_auto] items-baseline gap-x-3 text-sm rounded-md cursor-pointer transition-colors hover:bg-elevated/60"
-                    :title="`Edit ${ci.item.label} rate`"
-                    @click="editFieldFor(ci.item.id)"
-                  >
-                    <div class="font-medium truncate underline decoration-transparent underline-offset-2 transition-colors group-hover/item:decoration-current">
-                      {{ ci.item.label }}
+                <div class="pb-2 space-y-1.5">
+                  <template v-for="ci in cat.items" :key="ci.item.id">
+                    <!-- GST-on-x sub-items render with arrow -->
+                    <div
+                      v-if="ci.item.id === 'gst-legal' || ci.item.id === 'gst-maintenance'"
+                      class="group/item flex items-center justify-between gap-4 text-sm rounded-md cursor-pointer transition-colors hover:bg-elevated/60 ps-5"
+                      :title="`Edit ${ci.item.label} rate`"
+                      @click="editFieldFor(ci.item.id)"
+                    >
+                      <div class="min-w-0 text-muted">
+                        <span class="mr-1">↳</span>
+                        <span class="font-medium">{{ ci.item.label }}</span>
+                        <span class="tabular-nums"> ({{ formatPercent(ci.item.id === 'gst-legal' ? rates.gstOnLegalRate : rates.gstOnMaintenanceRate) }} of {{ formatINR(ci.item.id === 'gst-legal' ? rates.legalFeeFixed : rates.maintenancePerSqft * rates.flatSize * rates.maintenanceMonths) }})</span>
+                      </div>
+                      <div class="tabular-nums whitespace-nowrap text-right">{{ formatINR(ci.amount) }}</div>
                     </div>
-                    <div class="text-xs text-muted tabular-nums whitespace-nowrap">{{ ci.calculation }}</div>
-                    <div class="tabular-nums whitespace-nowrap text-right">{{ formatINR(ci.amount) }}</div>
-                  </div>
+
+                    <!-- normal rows -->
+                    <div
+                      v-else
+                      class="group/item flex items-baseline justify-between gap-4 text-sm rounded-md cursor-pointer transition-colors hover:bg-elevated/60"
+                      :title="`Edit ${ci.item.label} rate`"
+                      @click="editFieldFor(ci.item.id)"
+                    >
+                      <div class="min-w-0">
+                        <span class="font-medium underline decoration-transparent underline-offset-2 transition-colors group-hover/item:decoration-current">{{ ci.item.label }}</span>
+                        <span v-if="ci.calculation && ci.calculation !== 'Fixed' && !ci.calculation.startsWith('No') && ci.calculation !== '—'" class="text-muted tabular-nums"> ({{ ci.calculation.replace(/^₹/, '') }})</span>
+                      </div>
+                      <div class="tabular-nums whitespace-nowrap text-right">{{ formatINR(ci.amount) }}</div>
+                    </div>
+                  </template>
                   <USeparator />
                   <div class="flex justify-between text-sm text-muted">
                     <span>{{ cat.key === 'property' ? 'Flat cost subtotal' : cat.key === 'taxes' ? 'Taxes subtotal' : 'Handover subtotal' }}</span>
