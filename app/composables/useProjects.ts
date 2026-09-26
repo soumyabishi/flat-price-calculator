@@ -34,10 +34,10 @@ function seedProjects(): Project[] {
     set('car-parking', { value: 300000, units: 2, gstApplicable: false })
     set('infra', { label: 'Infrastructure charges', basis: 'perSqft', value: 150, gstApplicable: false })
     set('clubhouse', { label: 'Club house charges', basis: 'perSqft', value: 150, gstApplicable: false })
-    set('gas', { value: 50000, gstRate: 18 })
-    set('legal', { value: 25000, gstRate: 18 })
+    set('gas', { value: 50000, gstRate: 0.18 })
+    set('legal', { value: 25000, gstRate: 0.18 })
     set('corpus-fund', { value: 50, gstApplicable: false })
-    set('advance-maintenance', { label: 'Advance Maintenance (1 Year)', basis: 'perSqft', value: 48, gstRate: 18, gstApplicable: true })
+    set('advance-maintenance', { label: 'Advance Maintenance (1 Year)', basis: 'perSqft', value: 48, gstRate: 0.18, gstApplicable: true })
   })
 
   // 2. Rajapushpa Imperia — ready to move, no GST on base
@@ -56,7 +56,7 @@ function seedProjects(): Project[] {
     set('clubhouse', { label: 'Towards Clubhouse', basis: 'flat', value: 400000, gstApplicable: false })
     set('legal', { value: 30000, gstApplicable: false })
     set('corpus-fund', { value: 75, gstApplicable: false })
-    set('advance-maintenance', { label: 'Advance Maintenance (24 months)', basis: 'perSqft', value: 168, gstRate: 18, gstApplicable: true })
+    set('advance-maintenance', { label: 'Advance Maintenance (24 months)', basis: 'perSqft', value: 168, gstRate: 0.18, gstApplicable: true })
   })
 
   // 3. GHR Callisto T2&3 — under construction
@@ -73,9 +73,9 @@ function seedProjects(): Project[] {
     set('car-parking', { value: 250000, units: 1, gstApplicable: false })
     set('clubhouse', { label: 'Clubhouse, Amenities & Infrastructure', basis: 'flat', value: 400000, gstApplicable: false })
     set('evc', { label: 'Electric Vehicle Charge Point', value: 90000, gstApplicable: false })
-    set('legal', { value: 15000, gstRate: 18 })
+    set('legal', { value: 15000, gstRate: 0.18 })
     set('corpus-fund', { value: 42, gstApplicable: false })
-    set('advance-maintenance', { label: 'Maintenance (2 years @ ₹4/mo)', basis: 'perSqft', value: 96, gstRate: 18, gstApplicable: true })
+    set('advance-maintenance', { label: 'Maintenance (2 years @ ₹4/mo)', basis: 'perSqft', value: 96, gstRate: 0.18, gstApplicable: true })
   })
 
   // 4. Anvita IVANA C&F tower
@@ -91,9 +91,9 @@ function seedProjects(): Project[] {
     set('floor-rise', { value: 20, floors: 5, gstApplicable: false }) // 7th onwards
     set('car-parking', { value: 300000, units: 2, gstApplicable: false })
     set('clubhouse', { label: 'Amenities', basis: 'perSqft', value: 350, gstApplicable: false })
-    set('legal', { value: 15000, gstRate: 18 })
+    set('legal', { value: 15000, gstRate: 0.18 })
     set('corpus-fund', { value: 50, gstApplicable: false })
-    set('advance-maintenance', { label: 'Maintenance (24 months)', basis: 'perSqft', value: 72, gstRate: 18, gstApplicable: true })
+    set('advance-maintenance', { label: 'Maintenance (24 months)', basis: 'perSqft', value: 72, gstRate: 0.18, gstApplicable: true })
   })
 
   return [skye, imperia, callisto, ivana]

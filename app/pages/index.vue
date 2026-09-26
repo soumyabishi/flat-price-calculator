@@ -316,16 +316,16 @@ function onExport() {
                     </div>
                   </UFormField>
 
-                  <UFormField label="Builder discount / offer (%)" size="md" hint="Percentage discount on base price">
+                  <UFormField label="Builder discount / offer" size="md" hint="Percentage discount on base price">
                     <UInputNumber
                       v-model="active.discountPct"
                       :min="0"
-                      :max="90"
-                      :step="0.5"
+                      :max="0.9"
+                      :step="0.005"
                       :increment="false"
                       :decrement="false"
                       disable-wheel-change
-                      :formatOptions="{ maximumFractionDigits: 1 }"
+                      :formatOptions="{ maximumFractionDigits: 3 }"
                       class="w-full"
                     />
                   </UFormField>
@@ -517,17 +517,17 @@ function onExport() {
                             />
                           </div>
                         </UFormField>
-                      <UFormField label="Annual rent increase (%)" size="md">
+                      <UFormField label="Annual rent increase" size="md">
                         <div class="relative">
                           <UInputNumber
                             v-model="active.rentEscalationPct"
                             :min="0"
-                            :max="50"
-                            :step="1"
+                            :max="0.5"
+                            :step="0.01"
                             :increment="false"
                             :decrement="false"
                             disable-wheel-change
-                            :formatOptions="{ maximumFractionDigits: 1 }"
+                            :formatOptions="{ maximumFractionDigits: 2 }"
                             class="w-full pr-8"
                           />
                           <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted">%</span>

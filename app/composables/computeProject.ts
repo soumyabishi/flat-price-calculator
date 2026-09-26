@@ -15,7 +15,7 @@ export function formatINR(value: number, opts: { compact?: boolean } = {}): stri
 
 export function formatPercent(value: number): string {
   const safe = Number.isFinite(value) ? value : 0
-  return `${safe.toLocaleString('en-IN', { maximumFractionDigits: 2 })}%`
+  return `${(safe * 100).toLocaleString('en-IN', { maximumFractionDigits: 2 })}%`
 }
 
 export type ComputedItem = {
@@ -83,7 +83,7 @@ export function computeRentOutlay(project: Project): { months: number, outlay: n
     estimated = true
   }
 
-  const esc = pct(project.rentEscalationPct)
+  const esc = project.rentEscalationPct || 0
   let outlay = 0
   for (let m = 0; m < months; m++) {
     const year = Math.floor(m / 12)
@@ -94,17 +94,12 @@ export function computeRentOutlay(project: Project): { months: number, outlay: n
 
 const GOVERNMENT_IDS = new Set(['stamp-duty', 'transfer-duty', 'registration-fee', 'tds'])
 
-/** percentage stored as whole number (5 = 5%) → fraction */
-function pct(v: number | undefined): number {
-  return (v || 0) / 100
-}
-
 export function computeProject(project: Project): ComputedResult {
   const { areaSqft, baseRatePerSqft, discountPct, possessionStatus } = project
 
   // section 2
   const baseFlatCost = areaSqft * baseRatePerSqft
-  const discount = baseFlatCost * pct(discountPct)
+  const discount = baseFlatCost * (discountPct || 0)
   const netFlatCost = baseFlatCost - discount
 
   // active items
@@ -119,7 +114,7 @@ export function computeProject(project: Project): ComputedResult {
       case 'perFloor': return areaSqft * (item.value || 0) * (item.floors || 0)
       case 'perUnit': return (item.value || 0) * (item.units || 0)
       case 'flat': {
-        if (GOVERNMENT_IDS.has(item.id)) return netFlatCost * pct(item.value)
+        if (GOVERNMENT_IDS.has(item.id)) return netFlatCost * (item.value || 0)
         return item.value || 0
       }
     }
@@ -139,7 +134,7 @@ export function computeProject(project: Project): ComputedResult {
   function itemGst(item: ChargeItem, amount: number): number {
     if (!item.gstApplicable) return 0
     if (possessionStatus === 'readyToMove') return 0
-    return amount * pct(item.gstRate)
+    return amount * (item.gstRate || 0)
   }
 
   const sectionLabels: Record<string, string> = {
@@ -183,7 +178,7 @@ export function computeProject(project: Project): ComputedResult {
       // government items have no GST
       let gst = 0
       if (key !== 'government' && item.gstApplicable && possessionStatus === 'underConstruction') {
-        gst = amount * pct(item.gstRate)
+        gst = amount * (item.gstRate || 0)
       }
       if (item.id === 'tds') tds = amount
       if (key === 'builder') gstTotal += gst
@@ -193,13 +188,13 @@ export function computeProject(project: Project): ComputedResult {
 
     if (key === 'builder' && baseGstItem?.enabled !== false && possessionStatus === 'underConstruction') {
       // 5% GST on the full sale consideration (flat + builder charges), Skye/IVANA style
-      const gstOnBase = saleConsideration * pct(baseGstItem?.gstRate ?? DEFAULT_BASE_GST)
+      const gstOnBase = saleConsideration * (baseGstItem?.gstRate || DEFAULT_BASE_GST)
       secItems.unshift({
         item: baseGstItem ?? { ...builderItems[0]!.item, id: 'base-gst', label: 'GST (on flat cost)' },
         amount: gstOnBase,
         gst: 0,
         total: gstOnBase,
-        calculation: `${formatPercent(pct(baseGstItem?.gstRate) || pct(DEFAULT_BASE_GST))} of ${formatINR(saleConsideration)}`,
+        calculation: `${formatPercent(baseGstItem?.gstRate || DEFAULT_BASE_GST)} of ${formatINR(saleConsideration)}`,
       })
       gstTotal += gstOnBase
     }
@@ -237,4 +232,4 @@ export function computeProject(project: Project): ComputedResult {
   }
 }
 
-const DEFAULT_BASE_GST = 5
+const DEFAULT_BASE_GST = 0.05
