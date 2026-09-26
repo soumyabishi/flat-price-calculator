@@ -37,6 +37,8 @@ export type ComputedResult = {
   baseFlatCost: number
   discount: number
   netFlatCost: number
+  /** net flat cost + builder item amounts (GST added separately) */
+  saleConsideration: number
   sections: ComputedSection[]
   /** net flat cost + builder + government (+ possession) + interiors */
   grandTotal: number
@@ -102,38 +104,58 @@ export function computeProject(project: Project): ComputedResult {
   let tds = 0
   let gstTotal = 0
 
+  // First pass: builder item amounts (GST rows computed after we know the sale consideration)
+  type PendingItem = { item: ChargeItem, amount: number, calculation: string }
+  const pending: Record<string, PendingItem[] | undefined> = {}
   for (const key of ['builder', 'government', 'possession'] as const) {
-    const secItems = active
+    pending[key] = active
       .filter(i => i.section === key)
       .map((item) => {
         const amount = computeAmount(item)
-        const gst = key === 'builder' || key === 'possession' ? itemGst(item, amount) : 0
-        if (key === 'builder') gstTotal += gst
-        if (key === 'possession') gstTotal += gst
-        if (item.id === 'tds') tds = amount
-        return { item, amount, gst, total: amount + gst, calculation: calculation(item, amount) }
+        return { item, amount, calculation: calculation(item, amount) }
       })
-      // hide zero-amount disabled-by-default items
       .filter(ci => ci.amount > 0 || ci.item.optional === false)
-    const subtotal = secItems.reduce((s, ci) => s + ci.total, 0)
+  }
 
-    if (key === 'builder') {
-      // base-price GST row when under construction: 5% of net flat cost
-      if (possessionStatus === 'underConstruction') {
-        const gstOnBase = netFlatCost * DEFAULT_BASE_GST
-        const defaultGstItem = active.find(i => i.id === 'base-gst')
-        if (defaultGstItem) {
-          secItems.unshift({
-            item: defaultGstItem,
-            amount: gstOnBase,
-            gst: 0,
-            total: gstOnBase,
-            calculation: `${formatPercent(DEFAULT_BASE_GST)} of ${formatINR(netFlatCost)}`,
-          })
-        }
-        gstTotal += gstOnBase
+  // Sale consideration (Skye-style): net flat cost + builder item amounts (excluding registration-time items)
+  const builderItems = pending.builder ?? []
+  const builderSum = builderItems
+    .filter(ci => !ci.item.registrationTime)
+    .reduce((s, ci) => s + ci.amount, 0)
+  const saleConsideration = netFlatCost + builderSum
+
+  // Base GST row: applies on sale consideration when under construction AND item enabled
+  // Per-item GST: each builder item may carry its own GST rate instead (mutually exclusive usage)
+  const baseGstItem = active.find(i => i.id === 'base-gst')
+
+  for (const key of ['builder', 'government', 'possession'] as const) {
+    const secItems: ComputedItem[] = (pending[key] ?? []).map((p) => {
+      const { item, amount, calculation: calc } = p
+      // government items have no GST
+      let gst = 0
+      if (key !== 'government' && item.gstApplicable && possessionStatus === 'underConstruction') {
+        gst = amount * (item.gstRate || 0)
       }
+      if (item.id === 'tds') tds = amount
+      if (key === 'builder') gstTotal += gst
+      if (key === 'possession') gstTotal += gst
+      return { item, amount, gst, total: amount + gst, calculation: calc }
+    })
+
+    if (key === 'builder' && baseGstItem?.enabled !== false && possessionStatus === 'underConstruction') {
+      // 5% GST on the full sale consideration (flat + builder charges), Skye/IVANA style
+      const gstOnBase = saleConsideration * (baseGstItem?.gstRate || DEFAULT_BASE_GST)
+      secItems.unshift({
+        item: baseGstItem ?? { ...builderItems[0]!.item, id: 'base-gst', label: 'GST (on flat cost)' },
+        amount: gstOnBase,
+        gst: 0,
+        total: gstOnBase,
+        calculation: `${formatPercent(baseGstItem?.gstRate || DEFAULT_BASE_GST)} of ${formatINR(saleConsideration)}`,
+      })
+      gstTotal += gstOnBase
     }
+
+    const subtotal = secItems.reduce((s, ci) => s + ci.total, 0)
 
     // add subtotal (excludes TDS)
     const addable = secItems.filter(ci => !ci.item.excludedFromTotal)
@@ -151,6 +173,7 @@ export function computeProject(project: Project): ComputedResult {
     baseFlatCost,
     discount,
     netFlatCost,
+    saleConsideration,
     sections,
     grandTotal,
     perSqft: areaSqft > 0 ? grandTotal / areaSqft : 0,

@@ -27,6 +27,8 @@ export type ChargeItem = {
   hint?: string
   /** excluded from grand total (TDS — deduction mechanism, not extra cost) */
   excludedFromTotal?: boolean
+  /** excluded from the lumpsum sale consideration (registration-time items like legal, gas) */
+  registrationTime?: boolean
 }
 
 export type PossessionStatus = 'underConstruction' | 'readyToMove'
@@ -71,7 +73,8 @@ export type ChargeTemplate = {
   hint?: string
   /** not part of grand total */
   excludedFromTotal?: boolean
-  /** tds-like informational items excluded from total */
+  /** excluded from sale consideration (registration-time items) */
+  registrationTime?: boolean
 }
 
 export const CHARGE_TEMPLATES: ChargeTemplate[] = [
@@ -86,9 +89,9 @@ export const CHARGE_TEMPLATES: ChargeTemplate[] = [
   { id: 'development', label: 'Development charges', section: 'builder', basis: 'flat', defaultValue: 0, optional: true, gstApplicable: true },
   { id: 'electricity', label: 'Electricity connection', section: 'builder', basis: 'flat', defaultValue: 0, optional: true, gstApplicable: true },
   { id: 'water', label: 'Water connection', section: 'builder', basis: 'flat', defaultValue: 0, optional: true, gstApplicable: true },
-  { id: 'gas', label: 'Gas pipeline connection', section: 'builder', basis: 'flat', defaultValue: 0, optional: true, gstApplicable: true, hint: 'e.g. Centralised gas connection' },
+  { id: 'gas', label: 'Gas pipeline connection', section: 'builder', basis: 'flat', defaultValue: 0, optional: true, gstApplicable: true, hint: 'e.g. Centralised gas connection', registrationTime: true },
   { id: 'evc', label: 'EV charging point', section: 'builder', basis: 'flat', defaultValue: 0, optional: true, gstApplicable: true, hint: 'Electric vehicle charge point (optional)' },
-  { id: 'legal', label: 'Legal / documentation charges', section: 'builder', basis: 'flat', defaultValue: 15000, optional: false, gstApplicable: true, hint: '18% GST usually applies' },
+  { id: 'legal', label: 'Legal / documentation charges', section: 'builder', basis: 'flat', defaultValue: 15000, optional: false, gstApplicable: true, hint: '18% GST usually applies', registrationTime: true },
   { id: 'other-builder', label: 'Other builder charges', section: 'builder', basis: 'flat', defaultValue: 0, optional: true, gstApplicable: false },
 
   // section 4: government charges
@@ -125,6 +128,7 @@ export function createProject(name: string, overrides: Partial<Project> = {}): P
     gstRate: t.id === 'legal' ? 0.18 : DEFAULT_GST_RATE,
     hint: t.hint,
     excludedFromTotal: t.excludedFromTotal,
+    registrationTime: t.registrationTime,
   }))
 
   // government items with basis perSqft store percentages in `value` (0.04 = 4%)
