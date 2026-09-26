@@ -108,20 +108,21 @@ function isGov(item: ChargeItem) {
             />
             <span class="text-xs text-muted">GST</span>
 
-            <!-- GST rate -->
+            <!-- GST rate (whole %) -->
             <UInputNumber
               v-if="item.gstApplicable"
               v-model="item.gstRate"
               :min="0"
-              :max="0.5"
-              :step="0.005"
+              :max="28"
+              :step="1"
               :increment="false"
               :decrement="false"
               disable-wheel-change
-              :formatOptions="{ maximumFractionDigits: 3 }"
+              :formatOptions="{ maximumFractionDigits: 1 }"
               size="sm"
               class="w-24"
             />
+            <span v-if="item.gstApplicable" class="text-xs text-muted -ml-1">%</span>
           </div>
 
           <div class="flex items-center gap-2">
@@ -129,16 +130,16 @@ function isGov(item: ChargeItem) {
             <UInputNumber
               v-model="item.value"
               :min="0"
-              :step="isGov(item) ? 0.005 : 100"
+              :step="isGov(item) ? 0.5 : 100"
               :increment="false"
               :decrement="false"
               disable-wheel-change
               :formatOptions="isGov(item)
-                ? { maximumFractionDigits: 3 }
+                ? { maximumFractionDigits: 1 }
                 : { maximumFractionDigits: 2 }"
               size="sm"
               class="flex-1"
-              :placeholder="isGov(item) ? 'Rate (e.g. 0.04 = 4%)' : 'Amount'"
+              :placeholder="isGov(item) ? 'Rate % (e.g. 4 = 4%)' : 'Amount'"
             />
             <span v-if="isGov(item)" class="text-xs text-muted whitespace-nowrap">% of net flat cost</span>
             <span v-else-if="item.basis === 'perSqft'" class="text-xs text-muted whitespace-nowrap">₹ / sq.ft.</span>

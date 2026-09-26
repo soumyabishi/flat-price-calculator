@@ -105,10 +105,10 @@ export const CHARGE_TEMPLATES: ChargeTemplate[] = [
   { id: 'other-builder', label: 'Other builder charges', section: 'builder', basis: 'flat', defaultValue: 0, optional: true, gstApplicable: false },
 
   // section 4: government charges
-  { id: 'stamp-duty', label: 'Stamp duty', section: 'government', basis: 'perSqft', defaultValue: 0.04, optional: false, gstApplicable: false, hint: '% of net flat cost (state-specific)' },
-  { id: 'transfer-duty', label: 'Transfer duty / cess', section: 'government', basis: 'perSqft', defaultValue: 0.015, optional: false, gstApplicable: false, hint: '% of net flat cost (state-specific)' },
-  { id: 'registration-fee', label: 'Registration fee', section: 'government', basis: 'perSqft', defaultValue: 0.005, optional: false, gstApplicable: false, hint: '% of net flat cost (state-specific)' },
-  { id: 'tds', label: 'TDS (1% u/s 194-IA)', section: 'government', basis: 'perSqft', defaultValue: 0.01, optional: false, gstApplicable: false, hint: 'Deducted from builder payment, deposited with IT dept via Form 26QB — not an extra cost', excludedFromTotal: true },
+  { id: 'stamp-duty', label: 'Stamp duty', section: 'government', basis: 'perSqft', defaultValue: 4, optional: false, gstApplicable: false, hint: '% of net flat cost (state-specific)' },
+  { id: 'transfer-duty', label: 'Transfer duty / cess', section: 'government', basis: 'perSqft', defaultValue: 1.5, optional: false, gstApplicable: false, hint: '% of net flat cost (state-specific)' },
+  { id: 'registration-fee', label: 'Registration fee', section: 'government', basis: 'perSqft', defaultValue: 0.5, optional: false, gstApplicable: false, hint: '% of net flat cost (state-specific)' },
+  { id: 'tds', label: 'TDS (1% u/s 194-IA)', section: 'government', basis: 'perSqft', defaultValue: 1, optional: false, gstApplicable: false, hint: 'Deducted from builder payment, deposited with IT dept via Form 26QB — not an extra cost', excludedFromTotal: true },
 
   // section 5: possession / initial charges
   { id: 'corpus-fund', label: 'Corpus / sinking fund', section: 'possession', basis: 'perSqft', defaultValue: 50, optional: false, gstApplicable: false },
@@ -119,7 +119,7 @@ export const CHARGE_TEMPLATES: ChargeTemplate[] = [
   { id: 'other-possession', label: 'Other possession charges', section: 'possession', basis: 'flat', defaultValue: 0, optional: true, gstApplicable: false },
 ]
 
-const DEFAULT_GST_RATE = 0.05
+const DEFAULT_GST_RATE = 5
 
 export function createProject(name: string, overrides: Partial<Project> = {}): Project {
   const items: ChargeItem[] = CHARGE_TEMPLATES
@@ -135,7 +135,7 @@ export function createProject(name: string, overrides: Partial<Project> = {}): P
     optional: t.optional,
     enabled: !t.optional,
     gstApplicable: t.gstApplicable,
-    gstRate: t.id === 'legal' ? 0.18 : DEFAULT_GST_RATE,
+    gstRate: t.id === 'legal' ? 18 : DEFAULT_GST_RATE,
     hint: t.hint,
     excludedFromTotal: t.excludedFromTotal,
     registrationTime: t.registrationTime,
