@@ -98,8 +98,27 @@ const rentOn = computed(() => props.project.rentOn)
 
         <div class="pb-2 space-y-1">
           <template v-for="ci in cat.items" :key="ci.item.id">
+            <template v-if="ci.item.id === 'base-gst'">
+              <!-- Sale consideration (5% GST base) -->
+              <div class="flex items-baseline justify-between gap-4 text-sm pt-1">
+                <div>
+                  <span class="font-semibold">Sale consideration (flat + charges)</span>
+                  <div class="text-xs text-muted mt-0.5">{{ result.saleFormula }}</div>
+                </div>
+                <span class="tabular-num whitespace-nowrap font-semibold">{{ formatINR(result.saleConsideration) }}</span>
+              </div>
+              <!-- GST applied on it -->
+              <div class="flex items-baseline justify-between gap-4 text-sm ps-5">
+                <div class="text-xs text-muted">
+                  <span class="mr-1">↳</span>
+                  <span class="font-medium">GST on flat cost</span>
+                  <span class="tabular-num"> ({{ ci.calculation }})</span>
+                </div>
+                <span class="tabular-num whitespace-nowrap">{{ formatINR(ci.amount) }}</span>
+              </div>
+            </template>
             <ChargeRow
-              v-if="ci.item.id !== 'tds'"
+              v-else-if="ci.item.id !== 'tds'"
               :item="ci"
               :project="project"
             />

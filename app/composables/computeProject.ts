@@ -48,6 +48,8 @@ export type ComputedResult = {
   perSqft: number
   tds: number
   gstTotal: number
+  /** dynamic formula text: components summed into sale consideration */
+  saleFormula: string
   /** estimated rent paid from now until handover (escalation applied) */
   rentOutlay: number
   /** months from now until handover date */
@@ -168,6 +170,15 @@ export function computeProject(project: Project): ComputedResult {
     .reduce((s, ci) => s + ci.amount, 0)
   const saleConsideration = netFlatCost + builderSum
 
+  // Dynamic formula text: the actual components summed into sale consideration
+  const saleFormulaParts = [
+    'net flat cost',
+    ...builderItems
+      .filter(ci => !ci.item.registrationTime)
+      .map(ci => ci.item.label.toLowerCase()),
+  ]
+  const saleFormula = saleFormulaParts.join(' + ')
+
   // Base GST row: applies on sale consideration when under construction AND item enabled
   // Per-item GST: each builder item may carry its own GST rate instead (mutually exclusive usage)
   const baseGstItem = active.find(i => i.id === 'base-gst')
@@ -189,8 +200,8 @@ export function computeProject(project: Project): ComputedResult {
     if (key === 'builder' && baseGstItem?.enabled !== false && possessionStatus === 'underConstruction') {
       // 5% GST on the full sale consideration (flat + builder charges), Skye/IVANA style
       const gstOnBase = saleConsideration * (baseGstItem?.gstRate || DEFAULT_BASE_GST)
-      secItems.unshift({
-        item: baseGstItem ?? { ...builderItems[0]!.item, id: 'base-gst', label: 'GST (on flat cost)' },
+      secItems.push({
+        item: baseGstItem ?? { ...builderItems[0]!.item, id: 'base-gst', label: 'GST on flat cost' },
         amount: gstOnBase,
         gst: 0,
         total: gstOnBase,
@@ -218,6 +229,7 @@ export function computeProject(project: Project): ComputedResult {
     discount,
     netFlatCost,
     saleConsideration,
+    saleFormula,
     sections,
     grandTotal,
     /** grand total + interiors budget (affordability view) */

@@ -89,7 +89,7 @@ export type ChargeTemplate = {
 
 export const CHARGE_TEMPLATES: ChargeTemplate[] = [
   // pseudo item: base-price GST (shown only under construction)
-  { id: 'base-gst', label: 'GST (on flat cost)', section: 'builder', basis: 'flat', defaultValue: 0, optional: false, gstApplicable: false, hint: '5% of net flat cost — under construction only' },
+  { id: 'base-gst', label: 'GST on flat cost', section: 'builder', basis: 'flat', defaultValue: 0, optional: false, gstApplicable: false, hint: '5% of net flat cost — under construction only' },
   // section 3: builder / project charges
   { id: 'floor-rise', label: 'Floor rise charges', section: 'builder', basis: 'perFloor', defaultValue: 20, optional: true, gstApplicable: true, hint: '₹/sq.ft. per floor above floor-rise start' },
   { id: 'plc', label: 'PLC (Preferred Location)', section: 'builder', basis: 'perSqft', defaultValue: 0, optional: true, gstApplicable: true, hint: 'Preferred location charges' },
