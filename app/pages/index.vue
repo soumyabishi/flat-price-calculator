@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { formatINR } from '~/composables/computeProject'
 import type { ChargeItem } from '~/composables/useProjectConfig'
-import { CalendarDate } from '@internationalized/date'
 
 const {
   projects,
@@ -16,22 +15,32 @@ const {
   dirty,
 } = useProjects()
 
-const handoverCalendarDate = computed(() => {
-  const v = active.value.handoverDate
-  if (!v) return undefined
-  const [y, m, d] = v.split('-').map(Number)
-  if (!y || !m) return undefined
-  return new CalendarDate(y, m, d || 1)
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+const currentYear = new Date().getFullYear()
+const YEARS = Array.from({ length: 10 }, (_, i) => currentYear + i)
+
+const handoverMonth = computed(() => {
+  const m = Number(active.value.handoverDate?.split('-')[1])
+  return m ? MONTHS[m - 1] : undefined
 })
 
-function onHandoverChange(val: unknown) {
-  if (val && typeof val === 'object' && 'year' in val) {
-    const d = val as { year: number, month: number, day: number }
-    active.value.handoverDate = `${d.year}-${String(d.month).padStart(2, '0')}-${String(d.day ?? 1).padStart(2, '0')}`
-  }
-  else {
-    active.value.handoverDate = ''
-  }
+const handoverYear = computed(() => {
+  const y = Number(active.value.handoverDate?.split('-')[0])
+  return y || undefined
+})
+
+function onHandoverMonth(month: string) {
+  const y = Number(active.value.handoverDate?.split('-')[0]) || currentYear
+  const idx = MONTHS.indexOf(month) + 1
+  if (!idx) return
+  const day = active.value.handoverDate?.split('-')[2] ?? '01'
+  active.value.handoverDate = `${y}-${String(idx).padStart(2, '0')}-${day}`
+}
+
+function onHandoverYear(year: number) {
+  const m = Number(active.value.handoverDate?.split('-')[1]) || 1
+  const day = active.value.handoverDate?.split('-')[2] ?? '01'
+  active.value.handoverDate = `${year}-${String(m).padStart(2, '0')}-${day}`
 }
 
 const justSaved = ref(false)
@@ -235,86 +244,92 @@ function onExport() {
             class="mb-5"
           >
             <template #basic>
-              <div class="space-y-4 pt-4">
-                <UFormField label="Project name" size="md">
-                  <UInput v-model="active.name" class="w-full" placeholder="e.g. Rajapushpa Imperia C-2204" />
-                </UFormField>
-                <div class="grid grid-cols-2 gap-4">
-                  <UFormField label="Built-up area" size="md">
+              <div class="pt-4">
+                <div class="rounded-lg border border-default p-4 space-y-4">
+                  <UFormField label="Project name" size="md">
+                    <UInput v-model="active.name" class="w-full" placeholder="e.g. Rajapushpa Imperia C-2204" />
+                  </UFormField>
+
+                  <div class="grid grid-cols-2 gap-4">
+                    <UFormField label="Built-up area" size="md">
+                      <div class="relative">
+                        <UInputNumber
+                          v-model="active.areaSqft"
+                          :min="0"
+                          :increment="false"
+                          :decrement="false"
+                          disable-wheel-change
+                          :formatOptions="{ maximumFractionDigits: 0 }"
+                          :ui="{ base: 'pr-16 text-lg/7 px-3 py-2 font-medium' }"
+                          class="w-full"
+                        />
+                        <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted">sq.ft.</span>
+                      </div>
+                    </UFormField>
+
+                    <UFormField label="Floor" size="md">
+                      <div class="relative">
+                        <UInputNumber
+                          v-model="active.floorNo"
+                          :min="0"
+                          :increment="false"
+                          :decrement="false"
+                          disable-wheel-change
+                          :formatOptions="{ maximumFractionDigits: 0 }"
+                          :ui="{ base: 'pr-16 text-lg/7 px-3 py-2 font-medium' }"
+                          class="w-full"
+                        />
+                        <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted">floor</span>
+                      </div>
+                    </UFormField>
+                  </div>
+
+                  <UFormField label="Possession status" size="md">
+                    <URadioGroup
+                      v-model="active.possessionStatus"
+                      :items="[
+                        { label: 'Under construction', value: 'underConstruction', hint: 'GST applies on flat cost' },
+                        { label: 'Ready to move', value: 'readyToMove', hint: 'No GST on flat cost' },
+                      ]"
+                      variant="card"
+                      orientation="horizontal"
+                      size="sm"
+                      :ui="{ fieldset: 'w-full gap-x-3', item: 'flex-1 rounded-lg px-3 py-2.5' }"
+                    />
+                  </UFormField>
+
+                  <USeparator class="!my-5" />
+
+                  <UFormField label="Rate per sq.ft." size="md">
                     <div class="relative">
                       <UInputNumber
-                        v-model="active.areaSqft"
+                        v-model="active.baseRatePerSqft"
                         :min="0"
                         :increment="false"
                         :decrement="false"
                         disable-wheel-change
-                        :formatOptions="{ maximumFractionDigits: 0 }"
-                        :ui="{ base: 'pr-16 text-lg/7 px-3 py-2 font-medium' }"
+                        :formatOptions="{ maximumFractionDigits: 2 }"
+                        :ui="{ base: 'pr-24 text-lg/7 px-3 py-2 font-medium' }"
                         class="w-full"
                       />
-                      <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted">sq.ft.</span>
+                      <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted">₹ / sq.ft.</span>
                     </div>
                   </UFormField>
-                  <UFormField label="Floor" size="md">
-                    <div class="relative">
-                      <UInputNumber
-                        v-model="active.floorNo"
-                        :min="0"
-                        :increment="false"
-                        :decrement="false"
-                        disable-wheel-change
-                        :formatOptions="{ maximumFractionDigits: 0 }"
-                        :ui="{ base: 'pr-16 text-lg/7 px-3 py-2 font-medium' }"
-                        class="w-full"
-                      />
-                      <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted">floor</span>
-                    </div>
-                  </UFormField>
-                </div>
-                <UFormField label="Possession status" size="md">
-                  <URadioGroup
-                    v-model="active.possessionStatus"
-                    :items="[
-                      { label: 'Under construction', value: 'underConstruction', hint: 'GST applies on flat cost' },
-                      { label: 'Ready to move', value: 'readyToMove', hint: 'No GST on flat cost' },
-                    ]"
-                    variant="card"
-                    orientation="horizontal"
-                    size="sm"
-                    :ui="{ fieldset: 'w-full gap-x-3', item: 'flex-1 rounded-lg px-3 py-2.5' }"
-                  />
-                </UFormField>
 
-                <USeparator class="!my-5" />
-
-                <UFormField label="Rate per sq.ft." size="md">
-                  <div class="relative">
+                  <UFormField label="Builder discount / offer" size="md" hint="Percentage discount on base price">
                     <UInputNumber
-                      v-model="active.baseRatePerSqft"
+                      v-model="active.discountPct"
                       :min="0"
+                      :max="0.9"
+                      :step="0.005"
                       :increment="false"
                       :decrement="false"
                       disable-wheel-change
-                      :formatOptions="{ maximumFractionDigits: 2 }"
-                      :ui="{ base: 'pr-24 text-lg/7 px-3 py-2 font-medium' }"
+                      :formatOptions="{ maximumFractionDigits: 3 }"
                       class="w-full"
                     />
-                    <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted">₹ / sq.ft.</span>
-                  </div>
-                </UFormField>
-                <UFormField label="Builder discount / offer" size="md" hint="Percentage discount on base price">
-                  <UInputNumber
-                    v-model="active.discountPct"
-                    :min="0"
-                    :max="0.9"
-                    :step="0.005"
-                    :increment="false"
-                    :decrement="false"
-                    disable-wheel-change
-                    :formatOptions="{ maximumFractionDigits: 3 }"
-                    class="w-full"
-                  />
-                </UFormField>
+                  </UFormField>
+                </div>
               </div>
             </template>
 
@@ -434,22 +449,26 @@ function onExport() {
               <div class="pt-4">
                 <section class="rounded-lg border border-default p-4">
                   <div class="flex items-center gap-2 mb-4">
+                    <USwitch v-model="active.interiorsOn" size="xs" />
                     <UIcon name="i-ph-paint-brush" class="size-4 text-muted" />
                     <h4 class="text-sm font-semibold flex-1">Interiors / move-in budget</h4>
                   </div>
-                  <UInputNumber
-                    v-model="active.interiorsBudget"
-                    :min="0"
-                    :step="10000"
-                    :increment="false"
-                    :decrement="false"
-                    disable-wheel-change
-                    :formatOptions="{ maximumFractionDigits: 0 }"
-                    class="w-full"
-                  />
-                  <div class="text-xs text-muted mt-2">
-                    One-time budget for interiors, furnishing, move-in — not part of the flat price.
-                  </div>
+                  <template v-if="active.interiorsOn">
+                    <UInputNumber
+                      v-model="active.interiorsBudget"
+                      :min="0"
+                      :step="10000"
+                      :increment="false"
+                      :decrement="false"
+                      disable-wheel-change
+                      :formatOptions="{ maximumFractionDigits: 0 }"
+                      class="w-full"
+                    />
+                    <div class="text-xs text-muted mt-2">
+                      One-time budget for interiors, furnishing, move-in — not part of the flat price.
+                    </div>
+                  </template>
+                  <div v-else class="text-xs text-muted">Toggle on to plan interiors</div>
                 </section>
               </div>
             </template>
@@ -458,9 +477,11 @@ function onExport() {
               <div class="pt-4">
                 <section class="rounded-lg border border-default p-4">
                   <div class="flex items-center gap-2 mb-4">
+                    <USwitch v-model="active.rentOn" size="xs" />
                     <UIcon name="i-ph-buildings" class="size-4 text-muted" />
                     <h4 class="text-sm font-semibold flex-1">Rent during construction</h4>
                   </div>
+                  <template v-if="active.rentOn">
                   <div class="space-y-4">
                     <UFormField label="Monthly rent" size="md">
                       <div class="relative">
@@ -477,33 +498,48 @@ function onExport() {
                         <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted">₹ / month</span>
                       </div>
                     </UFormField>
-                    <div class="grid grid-cols-2 gap-4">
-                      <UFormField label="Expected handover" size="md">
-                        <UInputDate
-                          :model-value="handoverCalendarDate"
-                          granularity="day"
-                          class="w-full"
-                          @update:model-value="onHandoverChange"
-                        />
-                      </UFormField>
-                      <UFormField label="Rent escalation / year" size="md">
-                        <UInputNumber
-                          v-model="active.rentEscalationPct"
-                          :min="0"
-                          :max="0.5"
-                          :step="0.01"
-                          :increment="false"
-                          :decrement="false"
-                          disable-wheel-change
-                          :formatOptions="{ maximumFractionDigits: 2 }"
-                          class="w-full"
-                        />
+                      <div class="grid grid-cols-2 gap-4">
+                        <UFormField label="Expected handover" size="md">
+                          <div class="flex gap-2">
+                            <USelect
+                              :model-value="handoverMonth"
+                              :items="MONTHS"
+                              placeholder="Month"
+                              class="w-full"
+                              @update:model-value="onHandoverMonth"
+                            />
+                            <USelect
+                              :model-value="handoverYear"
+                              :items="YEARS"
+                              placeholder="Year"
+                              class="w-28"
+                              @update:model-value="onHandoverYear"
+                            />
+                          </div>
+                        </UFormField>
+                      <UFormField label="Annual rent increase" size="md">
+                        <div class="relative">
+                          <UInputNumber
+                            v-model="active.rentEscalationPct"
+                            :min="0"
+                            :max="0.5"
+                            :step="0.01"
+                            :increment="false"
+                            :decrement="false"
+                            disable-wheel-change
+                            :formatOptions="{ maximumFractionDigits: 2 }"
+                            class="w-full pr-8"
+                          />
+                          <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted">%</span>
+                        </div>
                       </UFormField>
                     </div>
                   </div>
                   <div class="text-xs text-muted mt-2">
                     Rent you keep paying until the flat is ready — excluded from the flat price, shown in the summary.
                   </div>
+                  </template>
+                  <div v-else class="text-xs text-muted">Toggle on to plan rent during construction</div>
                 </section>
               </div>
             </template>

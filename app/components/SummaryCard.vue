@@ -7,13 +7,42 @@ const props = defineProps<{
 }>()
 
 const result = computed(() => computeProject(props.project))
+
+const animatedTotal = ref(0)
+let rafId = 0
+
+watch(() => result.value.grandTotal, (target) => {
+  if (import.meta.server) {
+    animatedTotal.value = target
+    return
+  }
+  cancelAnimationFrame(rafId)
+  const from = animatedTotal.value
+  if (from === target) return
+  const duration = 500
+  const start = performance.now()
+  const tick = (now: number) => {
+    const p = Math.min(1, (now - start) / duration)
+    const eased = 1 - Math.pow(1 - p, 3)
+    animatedTotal.value = Math.round(from + (target - from) * eased)
+    if (p < 1) rafId = requestAnimationFrame(tick)
+  }
+  rafId = requestAnimationFrame(tick)
+}, { immediate: true })
+
+onMounted(() => {
+  animatedTotal.value = result.value.grandTotal
+})
+
+const interiorsOn = computed(() => props.project.interiorsOn)
+const rentOn = computed(() => props.project.rentOn)
 </script>
 
 <template>
   <UCard class="rounded-xl border-default">
     <div class="text-muted">Total flat cost</div>
     <div class="mt-1 text-3xl sm:text-4xl font-bold tabular-nums tracking-tight">
-      {{ formatINR(result.grandTotal) }}
+      {{ formatINR(animatedTotal) }}
     </div>
     <div class="mt-1 text-xs text-muted">
       All-inclusive · ₹{{ result.perSqft.toLocaleString('en-IN', { maximumFractionDigits: 0 }) }} / sq.ft.
@@ -84,41 +113,7 @@ const result = computed(() => computeProject(props.project))
       </details>
     </div>
 
-    <!-- TDS separate -->
     <USeparator class="my-3" />
-    <div class="flex items-baseline justify-between gap-4 text-sm text-muted">
-      <div>
-        <span class="font-medium">TDS 1% (not in total)</span>
-        <div class="text-xs mt-0.5">Deducted from builder payment · deposit via Form 26QB</div>
-      </div>
-      <div class="tabular-nums whitespace-nowrap">{{ formatINR(result.tds) }}</div>
-    </div>
-
-    <!-- Interiors separate -->
-    <div v-if="project.interiorsBudget > 0" class="flex items-baseline justify-between gap-4 text-sm text-muted mt-2">
-      <div>
-        <span class="font-medium">Interiors / move-in (not in total)</span>
-        <div class="text-xs mt-0.5">Own spending, outside the builder quote</div>
-      </div>
-      <div class="tabular-nums whitespace-nowrap">{{ formatINR(project.interiorsBudget) }}</div>
-    </div>
-
-    <!-- Rent during construction separate -->
-    <div
-      v-if="result.rentOutlay > 0"
-      class="flex items-baseline justify-between gap-4 text-sm text-muted mt-2"
-    >
-      <div>
-        <span class="font-medium">Rent during construction (not in total)</span>
-        <div class="text-xs mt-0.5">
-          ₹{{ project.rentDuringConstruction.toLocaleString('en-IN') }}/mo × {{ result.monthsToHandover }} months to handover
-          {{ (project.rentEscalationPct || 0) > 0 ? ` · ${(project.rentEscalationPct * 100).toFixed(0)}% / yr escalation` : '' }}
-        </div>
-      </div>
-      <div class="tabular-nums whitespace-nowrap">{{ formatINR(result.rentOutlay) }}</div>
-    </div>
-
-    <USeparator class="my-4" />
     <div class="flex items-baseline justify-between gap-4">
       <div>
         <div class="text-lg font-bold">All-inclusive price</div>
@@ -129,15 +124,61 @@ const result = computed(() => computeProject(props.project))
       </div>
     </div>
 
-    <!-- move-in cost -->
-    <div
-      v-if="project.interiorsBudget > 0 || result.rentOutlay > 0"
-      class="flex items-baseline justify-between gap-4 text-sm mt-3"
-    >
+    <!-- "Not in total" info lines (after All-inclusive, before Move-in) -->
+    <div class="mt-3 space-y-2 text-sm text-muted">
+      <div class="flex items-baseline justify-between gap-4">
+        <div>
+          <span class="font-medium">TDS 1% (not in total)</span>
+          <div class="text-xs mt-0.5">Deducted from builder payment · deposit via Form 26QB</div>
+        </div>
+        <div class="tabular-nums whitespace-nowrap">{{ formatINR(result.tds) }}</div>
+      </div>
+
+      <div v-if="interiorsOn" class="flex items-baseline justify-between gap-4">
+        <div>
+          <span class="font-medium">Interiors / move-in (not in total)</span>
+          <div class="text-xs mt-0.5">Own spending, outside the builder quote</div>
+        </div>
+        <div class="tabular-nums whitespace-nowrap">{{ formatINR(project.interiorsBudget) }}</div>
+      </div>
+    </div>
+
+    <!-- move-in cost (All-inclusive + interiors, no rent) -->
+    <div v-if="interiorsOn" class="flex items-baseline justify-between gap-4 mt-3">
       <div>
         <span class="font-semibold">Move-in cost</span>
         <div class="text-xs text-muted mt-0.5">
-          All-inclusive{{ project.interiorsBudget > 0 ? ' + interiors' : '' }}{{ result.rentOutlay > 0 ? ' + rent during construction' : '' }}
+          All-inclusive + {{ formatINR(project.interiorsBudget, { compact: true }) }} interiors
+        </div>
+      </div>
+      <div class="text-lg font-bold tabular-nums text-right">
+        {{ formatINR(result.cashNeeded) }}
+      </div>
+    </div>
+
+    <!-- Rent during construction separate (after Move-in, before Total cash impact) -->
+    <div
+      v-if="rentOn && project.possessionStatus === 'underConstruction' && project.rentDuringConstruction > 0"
+      class="flex items-baseline justify-between gap-4 text-sm text-muted mt-3"
+    >
+      <div>
+        <span class="font-medium">Rent during construction (not in total)</span>
+        <div class="text-xs mt-0.5">
+          ₹{{ project.rentDuringConstruction.toLocaleString('en-IN') }}/mo × {{ result.monthsToHandover }} months{{ result.rentEstimated ? ' (handover date not set — assuming 18)' : ' to handover' }}{{ (project.rentEscalationPct || 0) > 0 ? ` · ${(project.rentEscalationPct * 100).toFixed(0)}% / yr` : '' }}
+        </div>
+      </div>
+      <div class="tabular-nums whitespace-nowrap">{{ formatINR(result.rentOutlay) }}</div>
+    </div>
+
+    <!-- total cash impact (includes rent outlay) -->
+    <div
+      v-if="rentOn && project.possessionStatus === 'underConstruction' && project.rentDuringConstruction > 0"
+      class="flex items-baseline justify-between gap-4 mt-2"
+    >
+      <div>
+        <span class="font-semibold">Total cash impact</span>
+        <div class="text-xs text-muted mt-0.5">
+          Move-in cost + {{ formatINR(result.rentOutlay, { compact: true }) }} rent during construction
         </div>
       </div>
       <div class="text-lg font-bold tabular-nums text-right">

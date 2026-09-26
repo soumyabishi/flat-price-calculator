@@ -50,12 +50,12 @@ const calc = computed(() => props.item.calculation)
       class="group/item flex items-center justify-between gap-4 text-sm rounded-md cursor-pointer transition-colors hover:bg-elevated/60 ps-5 py-0.5"
       @click="emit('edit', item.item.id)"
     >
-      <div class="min-w-0 text-muted">
+      <div class="min-w-0 text-muted text-xs">
         <span class="mr-1">↳</span>
-        <span class="font-medium">GST on {{ item.item.label.toLowerCase() }}</span>
+        <span class="font-medium">GST</span>
         <span class="tabular-nums"> ({{ formatPercent(item.item.gstRate) }} of {{ formatINR(item.amount) }})</span>
       </div>
-      <div class="tabular-nums whitespace-nowrap text-right">{{ formatINR(item.gst) }}</div>
+      <div class="tabular-nums whitespace-nowrap text-right text-xs">{{ formatINR(item.gst) }}</div>
     </div>
   </div>
 </template>

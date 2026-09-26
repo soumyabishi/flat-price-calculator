@@ -59,8 +59,12 @@ export type Project = {
   }
   /** section 7: interiors */
   interiorsBudget: number
+  /** interiors toggle — when off, budget excluded from move-in cost entirely */
+  interiorsOn: boolean
   /** monthly rent paid during construction (under-construction projects) */
   rentDuringConstruction: number
+  /** rent toggle — when off, rent excluded from move-in cost entirely */
+  rentOn: boolean
   /** yearly rent escalation % (e.g. 0.08 = 8%) */
   rentEscalationPct: number
   /** expected handover date (ISO yyyy-mm) — used to estimate rent outlay */
@@ -164,7 +168,9 @@ export function createProject(name: string, overrides: Partial<Project> = {}): P
       processingFeePct: 0,
     },
     interiorsBudget: 0,
+    interiorsOn: false,
     rentDuringConstruction: 0,
+    rentOn: false,
     rentEscalationPct: 0.08,
     handoverDate: '',
     ...overrides,

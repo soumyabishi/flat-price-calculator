@@ -52,23 +52,36 @@ export type ComputedResult = {
   rentOutlay: number
   /** months from now until handover date */
   monthsToHandover: number
+  /** true when handover date is missing and 18 months was assumed */
+  rentEstimated: boolean
 }
 
 /**
  * Rent paid until handover: monthly rent with yearly escalation.
  * Returns months remaining and the total outlay (0 if ready to move / no date).
  */
-export function computeRentOutlay(project: Project): { months: number, outlay: number } {
-  if (project.possessionStatus !== 'underConstruction') return { months: 0, outlay: 0 }
-  if (!project.handoverDate) return { months: 0, outlay: 0 }
-  if (!project.rentDuringConstruction) return { months: 0, outlay: 0 }
+export function computeRentOutlay(project: Project): { months: number, outlay: number, estimated: boolean } {
+  if (project.possessionStatus !== 'underConstruction') return { months: 0, outlay: 0, estimated: false }
+  if (!project.rentOn) return { months: 0, outlay: 0, estimated: false }
+  if (!project.rentDuringConstruction) return { months: 0, outlay: 0, estimated: false }
 
-  const now = new Date()
-  const handover = new Date(`${project.handoverDate}-01T00:00:00`)
-  let months = (handover.getFullYear() - now.getFullYear()) * 12 + (handover.getMonth() - now.getMonth())
-  if (Number.isNaN(months)) return { months: 0, outlay: 0 }
-  months = Math.max(0, months)
-  if (months === 0) return { months: 0, outlay: 0 }
+  let months = 0
+  let estimated = false
+
+  if (project.handoverDate) {
+    const [y, m] = project.handoverDate.split('-').map(Number)
+    if (y && m && m >= 1 && m <= 12) {
+      const now = new Date()
+      const handover = new Date(y, m - 1, 1)
+      months = Math.max(0, (handover.getFullYear() - now.getFullYear()) * 12 + (handover.getMonth() - now.getMonth()))
+    }
+  }
+
+  // No handover date set → assume a typical 18-month build time
+  if (!months) {
+    months = 18
+    estimated = true
+  }
 
   const esc = project.rentEscalationPct || 0
   let outlay = 0
@@ -76,7 +89,7 @@ export function computeRentOutlay(project: Project): { months: number, outlay: n
     const year = Math.floor(m / 12)
     outlay += project.rentDuringConstruction * Math.pow(1 + esc, year)
   }
-  return { months, outlay: Math.round(outlay) }
+  return { months, outlay: Math.round(outlay), estimated }
 }
 
 const GOVERNMENT_IDS = new Set(['stamp-duty', 'transfer-duty', 'registration-fee', 'tds'])
@@ -214,7 +227,7 @@ export function computeProject(project: Project): ComputedResult {
     gstTotal,
     ...(() => {
       const rent = computeRentOutlay(project)
-      return { rentOutlay: rent.outlay, monthsToHandover: rent.months }
+      return { rentOutlay: rent.outlay, monthsToHandover: rent.months, rentEstimated: rent.estimated }
     })(),
   }
 }
