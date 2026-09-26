@@ -1,585 +1,365 @@
 <script setup lang="ts">
-import {
-  DEFAULT_ITEMS,
-  DEFAULT_RATES,
-  POSSESSION_OPTIONS,
-  RATE_CONFIGS,
-  type LineItem,
-  type PossessionStatus,
-  type RateFieldId,
-  type Rates,
-} from '~/composables/useCalculatorConfig'
-import { computeBreakdown, formatINR, formatPercent } from '~/composables/computeBreakdown'
+import { formatINR } from '~/composables/computeProject'
+import { CHARGE_TEMPLATES } from '~/composables/useProjectConfig'
+import type { ChargeItem } from '~/composables/useProjectConfig'
 
-const possessionStatus = ref<PossessionStatus>('underConstruction')
+useHead({ title: 'FlatBuy — All-inclusive cost calculator' })
 
-useHead({
-  title: 'FlatBuy — All-inclusive cost calculator',
-  htmlAttrs: { lang: 'en' },
-  link: [
-    { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
-  ],
-})
+const {
+  projects,
+  activeId,
+  activeProject,
+  addProject,
+  removeProject,
+  duplicateProject,
+  exportJSON,
+  importJSON,
+} = useProjects()
 
-const rates = reactive<Rates>({ ...DEFAULT_RATES })
-const items = ref<LineItem[]>(DEFAULT_ITEMS.map(i => ({ ...i, formula: { ...i.formula } })))
+const active = computed(() => activeProject.value!)
 
-const result = computed(() => computeBreakdown(rates, items.value, possessionStatus.value))
-
-const animatedTotal = ref(0)
-let rafId = 0
-
-watch(() => result.value.grandTotal, (target) => {
-  if (import.meta.server) {
-    animatedTotal.value = target
-    return
-  }
-  cancelAnimationFrame(rafId)
-  const from = animatedTotal.value
-  if (from === target) return
-  const duration = 500
-  const start = performance.now()
-  const tick = (now: number) => {
-    const p = Math.min(1, (now - start) / duration)
-    const eased = 1 - Math.pow(1 - p, 3)
-    animatedTotal.value = Math.round(from + (target - from) * eased)
-    if (p < 1) rafId = requestAnimationFrame(tick)
-  }
-  rafId = requestAnimationFrame(tick)
-}, { immediate: true })
-
-onMounted(() => {
-  animatedTotal.value = result.value.grandTotal
-})
-
-const propertyInputs = RATE_CONFIGS.filter(c => c.group === 'property')
-const ratesAndFeesInputs = RATE_CONFIGS.filter(c => c.group !== 'property')
-
-const rateFieldGroups = [
-  {
-    key: 'taxes',
-    label: 'Taxes & government fees',
-    icon: 'i-ph-bank',
-    fields: RATE_CONFIGS.filter(c => c.group === 'taxes'),
-  },
-  {
-    key: 'handover',
-    label: 'Handover charges',
-    icon: 'i-ph-key',
-    fields: RATE_CONFIGS.filter(c => c.group === 'handover'),
-  },
-]
-
-const rateFieldsOpen = ref(false)
-const collapsed = reactive<Record<string, boolean>>({
-  property: false,
-  taxes: true,
-  handover: true,
-})
-
-const highlightedField = ref<string | null>(null)
-let highlightTimer: ReturnType<typeof setTimeout> | undefined
-
-const LINE_ITEM_FIELD: Record<string, { field: RateFieldId, collapsible?: boolean, group?: string }> = {
-  'base-price': { field: 'basePricePerSqft' },
-  'amenities': { field: 'amenitiesPerSqft' },
-  'car-parking': { field: 'carParkingFixed' },
-  'facing-premium': { field: 'facingPremiumPerSqft' },
-  'floor-rise': { field: 'floorRisePerSqft' },
-  'view-premium': { field: 'viewPremiumPerSqft' },
-  'gst': { field: 'gstRate', collapsible: true, group: 'taxes' },
-  'stamp-duty': { field: 'stampDutyRate', collapsible: true, group: 'taxes' },
-  'transfer-duty': { field: 'transferDutyRate', collapsible: true, group: 'taxes' },
-  'registration-fee': { field: 'registrationFeeRate', collapsible: true, group: 'taxes' },
-  'legal-fee': { field: 'legalFeeFixed', collapsible: true, group: 'handover' },
-  'gst-legal': { field: 'gstOnLegalRate', collapsible: true, group: 'handover' },
-  'corpus-fund': { field: 'corpusFundPerSqft', collapsible: true, group: 'handover' },
-  'maintenance': { field: 'maintenancePerSqft', collapsible: true, group: 'handover' },
-  'gst-maintenance': { field: 'gstOnMaintenanceRate', collapsible: true, group: 'handover' },
+type SectionDef = {
+  key: string
+  title: string
+  icon: string
+  optional?: boolean
+  open: Ref<boolean>
 }
 
-async function editFieldFor(itemId: string) {
-  const mapping = LINE_ITEM_FIELD[itemId]
-  if (!mapping) return
-  if (mapping.collapsible) {
-    rateFieldsOpen.value = true
-    collapsed[mapping.group!] = false
-    await nextTick()
-  }
-  goToField(mapping.field)
+const builderOpen = ref(true)
+const governmentOpen = ref(false)
+const possessionOpen = ref(false)
+const loanOpen = ref(false)
+
+function itemsFor(project: { items: ChargeItem[] }, section: string): ChargeItem[] {
+  return project.items.filter(i => i.section === section)
 }
 
-function goToField(id: RateFieldId) {
-  const el = document.getElementById(`field-${id}`)
-  if (!el) return
-  el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-  highlightedField.value = id
-  clearTimeout(highlightTimer)
-  highlightTimer = setTimeout(() => (highlightedField.value = null), 2500)
-}
-
-function resetDefaults() {
-  Object.assign(rates, DEFAULT_RATES)
-  items.value = DEFAULT_ITEMS.map(i => ({ ...i, formula: { ...i.formula } }))
-}
-
-function isPercentage(id: string) {
-  return ['gstRate', 'stampDutyRate', 'transferDutyRate', 'registrationFeeRate', 'gstOnLegalRate', 'gstOnMaintenanceRate', 'basePriceDiscountPct'].includes(id)
-}
-
-function shortUnit(suffix?: string) {
-  if (!suffix) return ''
-  if (suffix === '%') return '%'
-  if (suffix.startsWith('₹')) return suffix === '₹' ? '₹' : '₹ / sq. ft.'
-  return suffix
-}
-
-function formatRate(id: string) {
-  const v = rates[id as keyof Rates] || 0
-  return isPercentage(id) ? formatINR(v * 100, { compact: false }).replace('₹', '') + '%' : formatINR(v)
-}
-
-const grandTotalCompact = computed(() => {
-  const t = result.value.grandTotal
-  if (t >= 1e7) return `${(t / 1e7).toFixed(2)} crore`
-  if (t >= 1e5) return `${(t / 1e5).toFixed(2)} lakh`
-  return formatINR(t)
-})
-
-const CATEGORY_COLORS: Record<string, string> = {
-  property: 'var(--ui-color-primary-500)',
-  taxes: 'var(--ui-color-neutral-500)',
-  handover: 'var(--ui-color-primary-300)',
-}
-
-const donutSegments = computed(() => {
-  const total = result.value.grandTotal || 1
-  let accumulated = 0
-  return result.value.categories.map((cat) => {
-    const pct = (cat.subtotal / total) * 100
-    const seg = {
-      key: cat.key,
-      label: cat.key === 'property' ? 'Property' : cat.key === 'taxes' ? 'Taxes & govt fees' : 'Handover',
-      pct,
-      offset: 25 - accumulated,
-      color: CATEGORY_COLORS[cat.key],
+const fileInput = ref<HTMLInputElement | null>(null)
+function onImport(e: Event) {
+  const target = e.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (!file) return
+  const reader = new FileReader()
+  reader.onload = () => {
+    const ok = importJSON(String(reader.result))
+    if (!ok) {
+      const toast = useToast()
+      toast.add({ title: 'Import failed', description: 'Invalid projects JSON', color: 'error' })
     }
-    accumulated += pct
-    return seg
-  })
-})
-
-const discountDelta = computed(() => {
-  const discountPct = rates.basePriceDiscountPct || 0
-  if (discountPct <= 0) return 0
-  // Gross (undiscounted) totals: recompute with discount = 0
-  const gross = computeBreakdown({ ...rates, basePriceDiscountPct: 0 }, items.value, possessionStatus.value).grandTotal
-  const net = result.value.grandTotal
-  return net - gross
-})
-
-const discountPct = computed(() => {
-  const gross = computeBreakdown({ ...rates, basePriceDiscountPct: 0 }, items.value, possessionStatus.value).grandTotal
-  if (!gross) return 0
-  return (discountDelta.value / gross) * 100
-})
-
-const donutCompact = computed(() => {
-  const t = result.value.grandTotal
-  if (t >= 1e7) return `₹${(t / 1e7).toFixed(2)} Cr`
-  if (t >= 1e5) return `₹${(t / 1e5).toFixed(2)} L`
-  return formatINR(t)
-})
-
-const propertyItems = computed(() => result.value.categories.find(c => c.key === 'property'))
-const taxesItems = computed(() => result.value.categories.find(c => c.key === 'taxes'))
-const handoverItems = computed(() => result.value.categories.find(c => c.key === 'handover'))
-
-function toggleCategory(key: string) {
-  collapsed[key] = !collapsed[key]
+  }
+  reader.readAsText(file)
+  target.value = ''
 }
+
+function onExport() {
+  const blob = new Blob([exportJSON()], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = 'flatbuy-projects.json'
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+const showCompare = ref(false)
 </script>
 
 <template>
   <UApp>
     <div class="min-h-screen bg-default text-default">
-    <UContainer class="py-8 sm:py-10 max-w-4xl">
-      <header class="mb-8">
-        <div class="flex items-start justify-between gap-4">
-          <div class="flex items-center gap-3">
-            <div class="flex items-center justify-center size-11 rounded-xl bg-primary text-inverted shrink-0">
-              <UIcon name="i-ph-buildings" class="size-6" />
-            </div>
-            <div>
-              <div class="flex items-center gap-2">
-                <span class="text-sm font-semibold tracking-wide text-muted uppercase">FlatBuy</span>
-                <UBadge color="neutral" variant="subtle" size="sm">Calculator</UBadge>
+      <UContainer class="py-8 sm:py-10 max-w-7xl">
+        <header class="mb-8">
+          <div class="flex items-center justify-between gap-4 flex-wrap">
+            <div class="flex items-center gap-3">
+              <div class="flex items-center justify-center size-11 rounded-xl bg-primary text-inverted shrink-0">
+                <UIcon name="i-ph-buildings" class="size-6" />
               </div>
-              <h1 class="text-2xl sm:text-3xl font-bold text-highlighted leading-tight">
-                All-inclusive cost calculator
-              </h1>
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="text-sm font-semibold tracking-wide text-muted uppercase">FlatBuy</span>
+                  <UBadge color="neutral" variant="subtle" size="sm">v2</UBadge>
+                </div>
+                <h1 class="text-2xl sm:text-3xl font-bold text-highlighted leading-tight">
+                  All-inclusive cost calculator
+                </h1>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <UButton
+                variant="outline"
+                color="neutral"
+                size="sm"
+                icon="i-ph-scales"
+                :disabled="projects.length < 2"
+                @click="showCompare = !showCompare"
+              >
+                Compare
+              </UButton>
+              <UDropdownMenu
+                :items="[[
+                  { label: 'Add project', icon: 'i-ph-plus', onSelect: () => addProject(`Project ${projects.length + 1}`) },
+                  { label: 'Duplicate current', icon: 'i-ph-copy', onSelect: () => duplicateProject(active.id) },
+                  { label: 'Export JSON', icon: 'i-ph-download-simple', onSelect: () => onExport() },
+                  { label: 'Import JSON', icon: 'i-ph-upload-simple', onSelect: () => fileInput?.click() },
+                  { label: 'Delete current', icon: 'i-ph-trash', color: 'error' as const, onSelect: () => removeProject(active.id) },
+                ]]"
+              >
+                <UButton icon="i-ph-dots-three" variant="outline" color="neutral" size="sm" />
+              </UDropdownMenu>
+              <UColorModeSelect class="w-28" color="neutral" size="sm" />
+              <input ref="fileInput" type="file" accept=".json" class="hidden" @change="onImport">
             </div>
           </div>
-        </div>
-        <p class="mt-2 text-muted">
-          Every charge from booking to handover, in one total. The summary stays pinned while you edit.
-        </p>
-        <USeparator class="mt-6" />
-      </header>
 
-      <UColorModeSelect
-        class="fixed top-4 right-4 z-50 w-32"
-        color="neutral"
-        size="sm"
-      />
+          <div class="mt-4 flex items-center gap-2 flex-wrap">
+            <UButton
+              v-for="p in projects"
+              :key="p.id"
+              size="sm"
+              :variant="p.id === active.id ? 'solid' : 'outline'"
+              color="neutral"
+              @click="activeId = p.id"
+            >
+              {{ p.name }}
+            </UButton>
+            <UButton size="sm" variant="ghost" color="neutral" icon="i-ph-plus" @click="addProject(`Project ${projects.length + 1}`)">
+              New
+            </UButton>
+          </div>
+          <USeparator class="mt-5" />
+        </header>
 
-      <div class="grid gap-6 lg:grid-cols-[2fr_3fr]">
-        <!-- LEFT: inputs -->
-        <div class="space-y-10">
-          <!-- Flat configuration -->
-          <section>
-            <div class="flex items-center gap-2">
-              <UIcon name="i-ph-buildings" class="size-5 text-muted" />
-              <h2 class="text-xl font-bold">Flat configuration</h2>
-            </div>
-            <p class="mt-1 text-sm text-muted">
-              These details are usually the same across flats in a project.
-            </p>
+        <CompareView
+          v-if="showCompare"
+          :projects="projects"
+          :baseline-id="active.id"
+          class="mb-8"
+          @select="activeId = $event"
+        />
 
-            <UFormField label="Possession status" size="md" class="mt-5">
-              <URadioGroup
-                v-model="possessionStatus"
-                :items="POSSESSION_OPTIONS"
-                variant="card"
-                orientation="horizontal"
-                size="sm"
-                :ui="{
-                  fieldset: 'w-full gap-x-3',
-                  item: 'flex-1 rounded-lg px-3 py-2.5',
-                  wrapper: 'w-full',
-                }"
-              />
-            </UFormField>
+        <div class="grid gap-8 lg:grid-cols-[2fr_3fr]">
+          <!-- LEFT: inputs -->
+          <div class="space-y-8">
+            <!-- 1: basic details -->
+            <section>
+              <div class="flex items-center gap-2">
+                <UIcon name="i-ph-info" class="size-5 text-muted" />
+                <h2 class="text-lg font-bold">Basic details</h2>
+              </div>
+              <div class="mt-4 space-y-4">
+                <UFormField label="Project name" size="md">
+                  <UInput v-model="active.name" class="w-full" placeholder="e.g. Rajapushpa Imperia C-2204" />
+                </UFormField>
+                <div class="grid grid-cols-2 gap-4">
+                  <UFormField label="Built-up area" size="md">
+                    <UInputNumber
+                      v-model="active.areaSqft"
+                      :min="0"
+                      :increment="false"
+                      :decrement="false"
+                      disable-wheel-change
+                      :formatOptions="{ maximumFractionDigits: 0 }"
+                      :ui="{ base: 'pr-16 text-lg/7 px-3 py-2 font-medium' }"
+                      class="w-full"
+                    />
+                    <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted">sq.ft.</span>
+                  </UFormField>
+                  <UFormField label="Floor" size="md">
+                    <UInputNumber
+                      v-model="active.floorNo"
+                      :min="0"
+                      :increment="false"
+                      :decrement="false"
+                      disable-wheel-change
+                      :formatOptions="{ maximumFractionDigits: 0 }"
+                      :ui="{ base: 'pr-16 text-lg/7 px-3 py-2 font-medium' }"
+                      class="w-full"
+                    />
+                    <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted">floor</span>
+                  </UFormField>
+                </div>
+                <UFormField label="Possession status" size="md">
+                  <URadioGroup
+                    v-model="active.possessionStatus"
+                    :items="[
+                      { label: 'Under construction', value: 'underConstruction', hint: 'GST applies on flat cost' },
+                      { label: 'Ready to move', value: 'readyToMove', hint: 'No GST on flat cost' },
+                    ]"
+                    variant="card"
+                    orientation="horizontal"
+                    size="sm"
+                    :ui="{ fieldset: 'w-full gap-x-3', item: 'flex-1 rounded-lg px-3 py-2.5' }"
+                  />
+                </UFormField>
+              </div>
+              <USeparator class="mt-6" />
+            </section>
 
-            <div class="mt-5 grid grid-cols-1 gap-y-5">
-              <UFormField
-                v-for="cfg in propertyInputs"
-                :key="cfg.id"
-                :label="cfg.label"
-                :description="cfg.hint"
-                :size="cfg.id === 'flatSize' || cfg.id === 'basePricePerSqft' ? 'xl' : 'md'"
-              >
-                <div
-                  :id="`field-${cfg.id}`"
-                  class="relative transition-all duration-500 rounded-(--ui-radius)"
-                  :class="[
-                    cfg.id === 'flatSize' || cfg.id === 'basePricePerSqft' ? 'max-w-md' : '',
-                    highlightedField === cfg.id ? 'ring-2 ring-primary bg-primary/5' : '',
-                  ]"
-                >
+            <!-- 2: base price -->
+            <section>
+              <div class="flex items-center gap-2">
+                <UIcon name="i-ph-currency-inr" class="size-5 text-muted" />
+                <h2 class="text-lg font-bold">Base flat price</h2>
+              </div>
+              <div class="mt-4 space-y-4">
+                <UFormField label="Rate per sq.ft." size="md">
                   <UInputNumber
-                    v-model="rates[cfg.id]"
+                    v-model="active.baseRatePerSqft"
                     :min="0"
-                    :step="isPercentage(cfg.id) ? 0.005 : 1"
                     :increment="false"
                     :decrement="false"
                     disable-wheel-change
-                    :formatOptions="isPercentage(cfg.id)
-                      ? { maximumFractionDigits: 3 }
-                      : { maximumFractionDigits: 2 }"
-                    :ui="cfg.id === 'flatSize' || cfg.id === 'basePricePerSqft'
-                      ? { base: 'pr-24 text-lg/7 px-4 py-2.5 font-medium' }
-                      : { base: 'pr-20' }"
+                    :formatOptions="{ maximumFractionDigits: 2 }"
+                    :ui="{ base: 'pr-24 text-lg/7 px-3 py-2 font-medium' }"
                     class="w-full"
                   />
-                  <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-muted whitespace-nowrap">
-                    {{ shortUnit(cfg.suffix) }}
-                  </span>
-                </div>
-              </UFormField>
-            </div>
-
-            <USeparator class="mt-10" />
-          </section>
-
-          <!-- Rates & fees -->
-          <section>
-            <div class="flex items-center gap-2">
-              <UIcon name="i-ph-percent" class="size-5 text-muted" />
-              <h2 class="text-xl font-bold">Rates &amp; fees</h2>
-            </div>
-            <p class="mt-1 text-sm text-muted">
-              Statutory rates, usually unchanged. Expand to edit.
-            </p>
-
-            <UCollapsible v-model:open="rateFieldsOpen" class="mt-4">
-              <div class="flex items-center justify-between py-3">
-                <span class="font-semibold">Rates &amp; government fees</span>
-                <UButton
-                  variant="ghost"
-                  color="neutral"
-                  size="xs"
-                  :icon="rateFieldsOpen ? 'i-ph-caret-up' : 'i-ph-caret-down'"
-                  aria-label="Toggle rates section"
-                />
-              </div>
-              <template #content>
-                <p class="text-sm text-muted mb-4">
-                  Statutory rates and possession charges. Defaults match the project sheet; edit only if your quote differs.
-                </p>
-
-                <div class="space-y-6 pb-4">
-                  <div
-                    v-for="group in rateFieldGroups"
-                    :key="group.key"
-                    class="rounded-lg border border-default p-4"
-                  >
-                    <div class="flex items-center gap-2 mb-4">
-                      <UIcon :name="group.icon" class="size-4 text-muted" />
-                      <h4 class="text-sm font-semibold">{{ group.label }}</h4>
-                    </div>
-                    <div class="space-y-5">
-                      <UFormField
-                        v-for="cfg in group.fields"
-                        :id="undefined"
-                        :key="cfg.id"
-                        :label="cfg.label"
-                        :description="cfg.hint"
-                        size="md"
-                      >
-                        <template v-if="cfg.id === 'maintenanceMonths'">
-                          <div
-                            :id="`field-maintenanceMonths`"
-                            class="flex flex-wrap items-center gap-2 transition-all duration-500 rounded-(--ui-radius)"
-                            :class="highlightedField === 'maintenanceMonths' ? 'ring-2 ring-primary bg-primary/5 p-2 -m-2' : ''"
-                          >
-                            <UButton
-                              v-for="opt in [12, 24, 36, 48]"
-                              :key="opt"
-                              size="sm"
-                              :variant="rates.maintenanceMonths === opt ? 'solid' : 'outline'"
-                              color="neutral"
-                              @click="rates.maintenanceMonths = opt"
-                            >
-                              {{ opt / 12 }} yr{{ opt === 12 ? '' : 's' }}
-                            </UButton>
-                            <UInputNumber
-                              v-model="rates.maintenanceMonths"
-                              :min="0"
-                              :step="1"
-                              :increment="false"
-                              :decrement="false"
-                              disable-wheel-change
-                              :formatOptions="{ maximumFractionDigits: 0 }"
-                              :ui="{ base: 'pr-20' }"
-                              class="w-36"
-                            />
-                            <span class="text-xs text-muted whitespace-nowrap">months</span>
-                          </div>
-                        </template>
-                        <div
-                          v-else
-                          :id="`field-${cfg.id}`"
-                          class="relative transition-all duration-500 rounded-(--ui-radius)"
-                          :class="highlightedField === cfg.id ? 'ring-2 ring-primary bg-primary/5' : ''"
-                        >
-                          <UInputNumber
-                            v-model="rates[cfg.id]"
-                            :min="0"
-                            :step="isPercentage(cfg.id) ? 0.005 : 1"
-                            :increment="false"
-                            :decrement="false"
-                            disable-wheel-change
-                            :formatOptions="isPercentage(cfg.id)
-                              ? { maximumFractionDigits: 3 }
-                              : { maximumFractionDigits: 2 }"
-                            :ui="{ base: 'pr-20' }"
-                            class="w-full"
-                          />
-                          <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-muted whitespace-nowrap">
-                            {{ shortUnit(cfg.suffix) }}
-                          </span>
-                        </div>
-                      </UFormField>
-                    </div>
-                  </div>
-                </div>
-              </template>
-            </UCollapsible>
-            <USeparator class="mt-2" />
-          </section>
-        </div>
-
-        <!-- RIGHT: summary (sticky) -->
-        <div class="lg:sticky lg:top-8 self-start">
-          <UCard class="rounded-xl border-default">
-            <div class="text-muted">Total flat cost</div>
-            <div class="mt-1 text-4xl sm:text-5xl font-bold tabular-nums tracking-tight">
-              {{ formatINR(animatedTotal) }}
-            </div>
-            <div class="mt-1.5 flex items-center gap-3">
-              <span class="text-sm text-muted">All-inclusive · {{ grandTotalCompact }}</span>
-
-              <!-- Discount delta badge -->
-              <UBadge
-                v-if="discountDelta !== 0"
-                :color="discountDelta < 0 ? 'success' : 'warning'"
-                variant="subtle"
-                size="md"
-                class="shrink-0 tabular-nums text-sm font-semibold"
-              >
-                <span class="flex items-center gap-1.5">
-                  <UIcon :name="discountDelta < 0 ? 'i-ph-arrow-bend-down-right' : 'i-ph-arrow-bend-up-right'" class="size-3.5" />
-                  {{ discountDelta < 0 ? '−' : '+' }}{{ formatINR(Math.abs(discountDelta)) }} ({{ Math.abs(discountPct).toFixed(1) }}%)
-                </span>
-              </UBadge>
-            </div>
-
-            <!-- Donut breakdown -->
-            <div class="mt-6 flex items-center gap-6">
-              <div class="relative shrink-0">
-                <svg width="128" height="128" viewBox="0 0 42 42" class="-rotate-90">
-                  <circle cx="21" cy="21" r="15.915" fill="none" stroke="var(--ui-bg-accented)" stroke-width="5" />
-                  <circle
-                    v-for="seg in donutSegments"
-                    :key="seg.key"
-                    cx="21"
-                    cy="21"
-                    r="15.915"
-                    fill="none"
-                    :stroke="seg.color"
-                    stroke-width="5"
-                    :stroke-dasharray="`${seg.pct} ${100 - seg.pct}`"
-                    :stroke-dashoffset="seg.offset"
-                    class="transition-all duration-500 ease-out"
+                  <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted">₹ / sq.ft.</span>
+                </UFormField>
+                <UFormField label="Builder discount / offer" size="md" hint="Percentage discount on base price">
+                  <UInputNumber
+                    v-model="active.discountPct"
+                    :min="0"
+                    :max="0.9"
+                    :step="0.005"
+                    :increment="false"
+                    :decrement="false"
+                    disable-wheel-change
+                    :formatOptions="{ maximumFractionDigits: 3 }"
+                    class="w-full"
                   />
-                </svg>
-                <div class="absolute inset-0 flex flex-col items-center justify-center">
-                  <div class="text-sm font-bold tabular-nums">{{ donutCompact }}</div>
-                  <div class="text-[10px] uppercase tracking-wide text-muted">Total cost</div>
-                </div>
+                </UFormField>
               </div>
+              <USeparator class="mt-6" />
+            </section>
 
-              <div class="flex-1 space-y-2 min-w-0">
-                <div
-                  v-for="seg in donutSegments"
-                  :key="seg.key"
-                  class="flex items-center gap-2 text-sm"
-                >
-                  <span class="size-2.5 rounded-sm shrink-0" :style="{ backgroundColor: seg.color }" />
-                  <span class="truncate">{{ seg.label }}</span>
-                  <span class="ml-auto tabular-nums text-muted">{{ seg.pct.toFixed(1) }}%</span>
-                </div>
+            <!-- 3-5: charge sections -->
+            <ChargeSection
+              :project="active"
+              title="Builder / project charges"
+              icon="i-ph-wrench"
+              :items="itemsFor(active, 'builder')"
+              collapsible
+            />
+
+            <ChargeSection
+              :project="active"
+              title="Government charges"
+              icon="i-ph-bank"
+              :items="itemsFor(active, 'government')"
+            />
+
+            <ChargeSection
+              :project="active"
+              title="Possession / initial charges"
+              icon="i-ph-key"
+              :items="itemsFor(active, 'possession')"
+              collapsible
+            />
+
+            <!-- 6: loan -->
+            <section class="rounded-lg border border-default p-4">
+              <div class="flex items-center gap-2 mb-4">
+                <USwitch v-model="active.loan.enabled" size="xs" />
+                <UIcon name="i-ph-bank" class="size-4 text-muted" />
+                <h4 class="text-sm font-semibold flex-1">Home loan</h4>
               </div>
-            </div>
-
-            <USeparator class="my-5" />
-
-            <div class="space-y-1">
-              <details
-                v-for="cat in result.categories"
-                :key="cat.key"
-                :open="!collapsed[cat.key]"
-                class="group"
-              >
-                <summary
-                  class="flex items-center justify-between cursor-pointer list-none py-2 rounded-md"
-                  @click.prevent="toggleCategory(cat.key)"
-                >
-                  <span class="flex items-center gap-2 font-semibold">
-                    <UIcon
-                      :name="cat.key === 'property' ? 'i-ph-buildings' : cat.key === 'taxes' ? 'i-ph-bank' : 'i-ph-key'"
-                      class="size-4 text-muted"
+              <div v-if="active.loan.enabled" class="space-y-4">
+                <UFormField label="Down payment" size="sm">
+                  <UInputNumber
+                    v-model="active.loan.downPayment"
+                    :min="0"
+                    :step="10000"
+                    :increment="false"
+                    :decrement="false"
+                    disable-wheel-change
+                    :formatOptions="{ maximumFractionDigits: 0 }"
+                    class="w-full"
+                  />
+                </UFormField>
+                <UFormField label="Loan amount" size="sm" hint="Auto-filled from total minus down payment; editable">
+                  <UInputNumber
+                    v-model="active.loan.loanAmount"
+                    :min="0"
+                    :step="10000"
+                    :increment="false"
+                    :decrement="false"
+                    disable-wheel-change
+                    :formatOptions="{ maximumFractionDigits: 0 }"
+                    class="w-full"
+                  />
+                </UFormField>
+                <div class="grid grid-cols-2 gap-4">
+                  <UFormField label="Interest rate (%)" size="sm">
+                    <UInputNumber
+                      v-model="active.loan.interestRate"
+                      :min="0"
+                      :max="30"
+                      :step="0.05"
+                      :increment="false"
+                      :decrement="false"
+                      disable-wheel-change
+                      :formatOptions="{ maximumFractionDigits: 2 }"
+                      class="w-full"
                     />
-                    {{ cat.label }}
-                  </span>
-                  <span class="flex items-center gap-2 tabular-nums">
-                    {{ formatINR(cat.subtotal) }}
-                    <UIcon
-                      :name="collapsed[cat.key] ? 'i-ph-caret-down' : 'i-ph-caret-up'"
-                      class="size-4 text-muted transition-transform"
+                  </UFormField>
+                  <UFormField label="Tenure (years)" size="sm">
+                    <UInputNumber
+                      v-model="active.loan.tenureYears"
+                      :min="1"
+                      :max="30"
+                      :step="1"
+                      :increment="false"
+                      :decrement="false"
+                      disable-wheel-change
+                      :formatOptions="{ maximumFractionDigits: 0 }"
+                      class="w-full"
                     />
-                  </span>
-                </summary>
-
-                <div class="pb-2 space-y-1.5">
-                  <template v-for="ci in cat.items" :key="ci.item.id">
-                    <UTooltip
-                      :delay-duration="0"
-                      :content="{ side: 'left', align: 'center', sideOffset: 6 }"
-                    >
-                      <!-- GST-on-x sub-items render with arrow -->
-                      <div
-                        v-if="ci.item.id === 'gst-legal' || ci.item.id === 'gst-maintenance'"
-                        class="group/item flex items-center justify-between gap-4 text-sm rounded-md cursor-pointer transition-colors hover:bg-elevated/60 ps-5"
-                        @click="editFieldFor(ci.item.id)"
-                      >
-                        <div class="min-w-0 text-muted">
-                          <span class="mr-1">↳</span>
-                          <span class="font-medium">{{ ci.item.label }}</span>
-                          <span class="tabular-nums"> ({{ formatPercent(ci.item.id === 'gst-legal' ? rates.gstOnLegalRate : rates.gstOnMaintenanceRate) }} of {{ formatINR(ci.item.id === 'gst-legal' ? rates.legalFeeFixed : rates.maintenancePerSqft * rates.flatSize * rates.maintenanceMonths) }})</span>
-                        </div>
-                        <div class="tabular-nums whitespace-nowrap text-right">{{ formatINR(ci.amount) }}</div>
-                      </div>
-
-                      <!-- normal rows -->
-                      <div
-                        v-else
-                        class="group/item flex items-baseline justify-between gap-4 text-sm rounded-md cursor-pointer transition-colors hover:bg-elevated/60"
-                        @click="editFieldFor(ci.item.id)"
-                      >
-                        <div class="min-w-0">
-                          <span class="font-medium underline decoration-transparent underline-offset-2 transition-colors group-hover/item:decoration-current">{{ ci.item.label }}</span>
-                          <span v-if="ci.calculation && ci.calculation !== 'Fixed' && !ci.calculation.startsWith('No') && ci.calculation !== '—'" class="text-xs text-muted tabular-nums"> ({{ ci.calculation.replace(/^₹/, '') }})</span>
-                        </div>
-                        <div class="tabular-nums whitespace-nowrap text-right">{{ formatINR(ci.amount) }}</div>
-                      </div>
-                      <template #content>
-                        <span class="flex items-center gap-1.5">
-                          <UIcon name="i-ph-pencil-simple-line" class="size-3.5" />
-                          Edit
-                        </span>
-                      </template>
-                    </UTooltip>
-                  </template>
-                  <USeparator />
-                  <div class="flex justify-between text-sm text-muted">
-                    <span>{{ cat.key === 'property' ? 'Flat cost subtotal' : cat.key === 'taxes' ? 'Taxes subtotal' : 'Handover subtotal' }}</span>
-                    <span class="tabular-nums">{{ formatINR(cat.subtotal) }}</span>
-                  </div>
+                  </UFormField>
                 </div>
-              </details>
-            </div>
-
-            <USeparator class="my-5" />
-
-            <div class="flex items-baseline justify-between gap-4">
-              <div>
-                <div class="text-xl font-bold">Grand total</div>
-                <div class="text-xs text-muted mt-1">
-                  Property + taxes + handover · adjusts with premiums
-                </div>
+                <UFormField label="Processing fee (%)" size="sm">
+                  <UInputNumber
+                    v-model="active.loan.processingFeePct"
+                    :min="0"
+                    :step="0.05"
+                    :increment="false"
+                    :decrement="false"
+                    disable-wheel-change
+                    :formatOptions="{ maximumFractionDigits: 2 }"
+                    class="w-full"
+                  />
+                </UFormField>
               </div>
-              <div class="text-2xl sm:text-3xl font-bold tabular-nums text-right">
-                {{ formatINR(result.grandTotal) }}
-              </div>
-            </div>
-          </UCard>
+              <div v-else class="text-xs text-muted">Toggle on to plan the loan</div>
+            </section>
 
-          <div class="mt-4 flex justify-end">
-            <UButton
-              variant="ghost"
-              color="neutral"
-              size="xs"
-              icon="i-ph-arrow-counter-clockwise"
-              @click="resetDefaults"
-            >
-              Reset to defaults
-            </UButton>
+            <!-- 7: interiors -->
+            <section class="rounded-lg border border-default p-4">
+              <div class="flex items-center gap-2 mb-4">
+                <UIcon name="i-ph-sofa" class="size-4 text-muted" />
+                <h4 class="text-sm font-semibold flex-1">Interiors / move-in budget</h4>
+              </div>
+              <UInputNumber
+                v-model="active.interiorsBudget"
+                :min="0"
+                :step="10000"
+                :increment="false"
+                :decrement="false"
+                disable-wheel-change
+                :formatOptions="{ maximumFractionDigits: 0 }"
+                class="w-full"
+              />
+              <div class="text-xs text-muted mt-2">One-time budget for interiors, furnishing, move-in</div>
+            </section>
+          </div>
+
+          <!-- RIGHT: summary -->
+          <div class="lg:sticky lg:top-8 self-start">
+            <SummaryCard :project="active" />
           </div>
         </div>
-      </div>
-    </UContainer>
+      </UContainer>
     </div>
   </UApp>
 </template>
