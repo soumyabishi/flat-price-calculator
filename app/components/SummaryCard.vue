@@ -94,22 +94,54 @@ const result = computed(() => computeProject(props.project))
       <div class="tabular-nums whitespace-nowrap">{{ formatINR(result.tds) }}</div>
     </div>
 
-    <!-- Interiors -->
-    <div v-if="project.interiorsBudget > 0" class="flex items-baseline justify-between gap-4 text-sm mt-2">
-      <div class="font-medium">Interiors / move-in</div>
+    <!-- Interiors separate -->
+    <div v-if="project.interiorsBudget > 0" class="flex items-baseline justify-between gap-4 text-sm text-muted mt-2">
+      <div>
+        <span class="font-medium">Interiors / move-in (not in total)</span>
+        <div class="text-xs mt-0.5">Own spending, outside the builder quote</div>
+      </div>
       <div class="tabular-nums whitespace-nowrap">{{ formatINR(project.interiorsBudget) }}</div>
     </div>
 
-    <USeparator class="my-4" />
+    <!-- Rent during construction separate -->
+    <div
+      v-if="result.rentOutlay > 0"
+      class="flex items-baseline justify-between gap-4 text-sm text-muted mt-2"
+    >
+      <div>
+        <span class="font-medium">Rent during construction (not in total)</span>
+        <div class="text-xs mt-0.5">
+          ₹{{ project.rentDuringConstruction.toLocaleString('en-IN') }}/mo × {{ result.monthsToHandover }} months to handover
+          {{ (project.rentEscalationPct || 0) > 0 ? ` · ${(project.rentEscalationPct * 100).toFixed(0)}% / yr escalation` : '' }}
+        </div>
+      </div>
+      <div class="tabular-nums whitespace-nowrap">{{ formatINR(result.rentOutlay) }}</div>
+    </div>
 
-    <!-- grand total -->
+    <USeparator class="my-4" />
     <div class="flex items-baseline justify-between gap-4">
       <div>
-        <div class="text-lg font-bold">Grand total</div>
-        <div class="text-xs text-muted mt-0.5">Property + charges · adjusts with premiums</div>
+        <div class="text-lg font-bold">All-inclusive price</div>
+        <div class="text-xs text-muted mt-0.5">Flat + builder + government + possession</div>
       </div>
       <div class="text-2xl font-bold tabular-nums text-right">
         {{ formatINR(result.grandTotal) }}
+      </div>
+    </div>
+
+    <!-- move-in cost -->
+    <div
+      v-if="project.interiorsBudget > 0 || result.rentOutlay > 0"
+      class="flex items-baseline justify-between gap-4 text-sm mt-3"
+    >
+      <div>
+        <span class="font-semibold">Move-in cost</span>
+        <div class="text-xs text-muted mt-0.5">
+          All-inclusive{{ project.interiorsBudget > 0 ? ' + interiors' : '' }}{{ result.rentOutlay > 0 ? ' + rent during construction' : '' }}
+        </div>
+      </div>
+      <div class="text-lg font-bold tabular-nums text-right">
+        {{ formatINR(result.cashNeeded + result.rentOutlay) }}
       </div>
     </div>
 

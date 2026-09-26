@@ -128,18 +128,50 @@ function load(): Project[] {
 }
 
 export function useProjects() {
-  const projects = useState<Project[]>('projects', load)
+  const projects = useState<Project[]>('projects', () => import.meta.server ? load() : [])
 
-  watch(projects, (val) => {
-    if (import.meta.client) {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(val))
-      }
-      catch {}
+  // Hydrate from localStorage on client after SSR (useState payload would carry server seeds)
+  if (import.meta.client) {
+    const stored = load()
+    if (stored.length) {
+      projects.value = stored
     }
+  }
+
+  // Explicit save model: edits stay in memory only; Save button persists to localStorage
+  const dirty = ref(false)
+
+  function save() {
+    if (!import.meta.client) return false
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(projects.value))
+      dirty.value = false
+      return true
+    }
+    catch {
+      return false
+    }
+  }
+
+  // mark dirty on any project edit (deep)
+  watch(projects, () => {
+    if (import.meta.client) dirty.value = true
   }, { deep: true })
 
   const activeId = useState<string>('activeProjectId', () => projects.value[0]?.id ?? '')
+
+  // Restore last-selected tab project on client (activeId SSR payload holds server seed id)
+  if (import.meta.client) {
+    const savedActiveId = (() => {
+      try { return localStorage.getItem('flatbuy-active-id') } catch { return null }
+    })()
+    if (savedActiveId && projects.value.some(p => p.id === savedActiveId)) {
+      activeId.value = savedActiveId
+    }
+    watch(activeId, (id) => {
+      try { localStorage.setItem('flatbuy-active-id', id) } catch {}
+    })
+  }
 
   const activeProject = computed(() =>
     projects.value.find(p => p.id === activeId.value) ?? projects.value[0]!,
@@ -206,5 +238,7 @@ export function useProjects() {
     duplicateProject,
     exportJSON,
     importJSON,
+    save,
+    dirty,
   }
 }

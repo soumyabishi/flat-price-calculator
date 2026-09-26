@@ -40,12 +40,43 @@ export type ComputedResult = {
   /** net flat cost + builder item amounts (GST added separately) */
   saleConsideration: number
   sections: ComputedSection[]
-  /** net flat cost + builder + government (+ possession) + interiors */
+  /** all-inclusive acquisition price (interiors excluded) */
   grandTotal: number
+  /** grand total + interiors budget — for affordability planning */
+  cashNeeded: number
   /** all-inclusive price per sqft */
   perSqft: number
   tds: number
   gstTotal: number
+  /** estimated rent paid from now until handover (escalation applied) */
+  rentOutlay: number
+  /** months from now until handover date */
+  monthsToHandover: number
+}
+
+/**
+ * Rent paid until handover: monthly rent with yearly escalation.
+ * Returns months remaining and the total outlay (0 if ready to move / no date).
+ */
+export function computeRentOutlay(project: Project): { months: number, outlay: number } {
+  if (project.possessionStatus !== 'underConstruction') return { months: 0, outlay: 0 }
+  if (!project.handoverDate) return { months: 0, outlay: 0 }
+  if (!project.rentDuringConstruction) return { months: 0, outlay: 0 }
+
+  const now = new Date()
+  const handover = new Date(`${project.handoverDate}-01T00:00:00`)
+  let months = (handover.getFullYear() - now.getFullYear()) * 12 + (handover.getMonth() - now.getMonth())
+  if (Number.isNaN(months)) return { months: 0, outlay: 0 }
+  months = Math.max(0, months)
+  if (months === 0) return { months: 0, outlay: 0 }
+
+  const esc = project.rentEscalationPct || 0
+  let outlay = 0
+  for (let m = 0; m < months; m++) {
+    const year = Math.floor(m / 12)
+    outlay += project.rentDuringConstruction * Math.pow(1 + esc, year)
+  }
+  return { months, outlay: Math.round(outlay) }
 }
 
 const GOVERNMENT_IDS = new Set(['stamp-duty', 'transfer-duty', 'registration-fee', 'tds'])
@@ -100,7 +131,7 @@ export function computeProject(project: Project): ComputedResult {
   }
 
   const sections: ComputedSection[] = []
-  let grandTotal = netFlatCost + project.interiorsBudget
+  let grandTotal = netFlatCost
   let tds = 0
   let gstTotal = 0
 
@@ -176,9 +207,15 @@ export function computeProject(project: Project): ComputedResult {
     saleConsideration,
     sections,
     grandTotal,
+    /** grand total + interiors budget (affordability view) */
+    cashNeeded: grandTotal + (project.interiorsBudget || 0),
     perSqft: areaSqft > 0 ? grandTotal / areaSqft : 0,
     tds,
     gstTotal,
+    ...(() => {
+      const rent = computeRentOutlay(project)
+      return { rentOutlay: rent.outlay, monthsToHandover: rent.months }
+    })(),
   }
 }
 

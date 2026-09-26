@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { formatINR } from '~/composables/computeProject'
 import type { ChargeItem } from '~/composables/useProjectConfig'
+import { CalendarDate } from '@internationalized/date'
 
 const {
   projects,
@@ -11,7 +12,35 @@ const {
   duplicateProject,
   exportJSON,
   importJSON,
+  save,
+  dirty,
 } = useProjects()
+
+const handoverCalendarDate = computed(() => {
+  const v = active.value.handoverDate
+  if (!v) return undefined
+  const [y, m, d] = v.split('-').map(Number)
+  if (!y || !m) return undefined
+  return new CalendarDate(y, m, d || 1)
+})
+
+function onHandoverChange(val: unknown) {
+  if (val && typeof val === 'object' && 'year' in val) {
+    const d = val as { year: number, month: number, day: number }
+    active.value.handoverDate = `${d.year}-${String(d.month).padStart(2, '0')}-${String(d.day ?? 1).padStart(2, '0')}`
+  }
+  else {
+    active.value.handoverDate = ''
+  }
+}
+
+const justSaved = ref(false)
+function onSave() {
+  if (save()) {
+    justSaved.value = true
+    setTimeout(() => (justSaved.value = false), 2000)
+  }
+}
 
 const active = computed(() => activeProject.value!)
 
@@ -29,14 +58,20 @@ const fileInput = ref<HTMLInputElement | null>(null)
 
 const activeTab = ref('basic')
 
-const tabItems = [
-  { label: 'Flat', value: 'basic', icon: 'i-ph-info', slot: 'basic' },
-  { label: 'Builder', value: 'builder', icon: 'i-ph-wrench', slot: 'builder' },
-  { label: 'Government', value: 'government', icon: 'i-ph-bank', slot: 'government' },
-  { label: 'Possession', value: 'possession', icon: 'i-ph-key', slot: 'possession' },
-  { label: 'Loan', value: 'loan', icon: 'i-ph-percent', slot: 'loan' },
-  { label: 'Interiors', value: 'interiors', icon: 'i-ph-paint-brush', slot: 'interiors' },
-]
+const tabItems = computed(() => {
+  const items = [
+    { label: 'Flat', value: 'basic', icon: 'i-ph-info', slot: 'basic' },
+    { label: 'Builder', value: 'builder', icon: 'i-ph-wrench', slot: 'builder' },
+    { label: 'Government', value: 'government', icon: 'i-ph-bank', slot: 'government' },
+    { label: 'Possession', value: 'possession', icon: 'i-ph-key', slot: 'possession' },
+    { label: 'Loan', value: 'loan', icon: 'i-ph-percent', slot: 'loan' },
+    { label: 'Interiors', value: 'interiors', icon: 'i-ph-paint-brush', slot: 'interiors' },
+  ]
+  if (active.value.possessionStatus === 'underConstruction') {
+    items.push({ label: 'Rent', value: 'rent', icon: 'i-ph-buildings', slot: 'rent' })
+  }
+  return items
+})
 
 const deleteTarget = ref<{ id: string, name: string } | undefined>()
 function confirmDelete() {
@@ -92,6 +127,16 @@ function onExport() {
           </div>
 
           <div class="flex items-center gap-2">
+            <UButton
+              :variant="dirty ? 'solid' : 'outline'"
+              :color="dirty ? 'success' : 'neutral'"
+              size="sm"
+              :icon="justSaved ? 'i-ph-check' : 'i-ph-floppy-disk'"
+              :disabled="!dirty"
+              @click="onSave"
+            >
+              {{ justSaved ? 'Saved' : dirty ? 'Save' : 'Saved' }}
+            </UButton>
             <UButton
               to="/compare"
               variant="outline"
@@ -179,7 +224,7 @@ function onExport() {
         </template>
       </UModal>
 
-      <div class="grid gap-8 lg:grid-cols-[2fr_3fr]">
+      <div class="grid gap-8 lg:grid-cols-[1fr_26rem] xl:grid-cols-[1fr_28rem]">
         <!-- LEFT: inputs in tabs -->
         <div>
           <UTabs
@@ -402,7 +447,63 @@ function onExport() {
                     :formatOptions="{ maximumFractionDigits: 0 }"
                     class="w-full"
                   />
-                  <div class="text-xs text-muted mt-2">One-time budget for interiors, furnishing, move-in</div>
+                  <div class="text-xs text-muted mt-2">
+                    One-time budget for interiors, furnishing, move-in — not part of the flat price.
+                  </div>
+                </section>
+              </div>
+            </template>
+
+            <template #rent>
+              <div class="pt-4">
+                <section class="rounded-lg border border-default p-4">
+                  <div class="flex items-center gap-2 mb-4">
+                    <UIcon name="i-ph-buildings" class="size-4 text-muted" />
+                    <h4 class="text-sm font-semibold flex-1">Rent during construction</h4>
+                  </div>
+                  <div class="space-y-4">
+                    <UFormField label="Monthly rent" size="md">
+                      <div class="relative">
+                        <UInputNumber
+                          v-model="active.rentDuringConstruction"
+                          :min="0"
+                          :step="1000"
+                          :increment="false"
+                          :decrement="false"
+                          disable-wheel-change
+                          :formatOptions="{ maximumFractionDigits: 0 }"
+                          class="w-full"
+                        />
+                        <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted">₹ / month</span>
+                      </div>
+                    </UFormField>
+                    <div class="grid grid-cols-2 gap-4">
+                      <UFormField label="Expected handover" size="md">
+                        <UInputDate
+                          :model-value="handoverCalendarDate"
+                          granularity="day"
+                          class="w-full"
+                          @update:model-value="onHandoverChange"
+                        />
+                      </UFormField>
+                      <UFormField label="Rent escalation / year" size="md">
+                        <UInputNumber
+                          v-model="active.rentEscalationPct"
+                          :min="0"
+                          :max="0.5"
+                          :step="0.01"
+                          :increment="false"
+                          :decrement="false"
+                          disable-wheel-change
+                          :formatOptions="{ maximumFractionDigits: 2 }"
+                          class="w-full"
+                        />
+                      </UFormField>
+                    </div>
+                  </div>
+                  <div class="text-xs text-muted mt-2">
+                    Rent you keep paying until the flat is ready — excluded from the flat price, shown in the summary.
+                  </div>
                 </section>
               </div>
             </template>
@@ -410,7 +511,7 @@ function onExport() {
         </div>
 
         <!-- RIGHT: summary -->
-        <div class="lg:sticky lg:top-8 self-start">
+        <div class="lg:sticky lg:top-8 self-start w-full">
           <SummaryCard :project="active" />
         </div>
       </div>

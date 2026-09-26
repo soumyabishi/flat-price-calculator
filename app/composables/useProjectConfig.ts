@@ -59,6 +59,12 @@ export type Project = {
   }
   /** section 7: interiors */
   interiorsBudget: number
+  /** monthly rent paid during construction (under-construction projects) */
+  rentDuringConstruction: number
+  /** yearly rent escalation % (e.g. 0.08 = 8%) */
+  rentEscalationPct: number
+  /** expected handover date (ISO yyyy-mm) — used to estimate rent outlay */
+  handoverDate: string
 }
 
 export type ChargeTemplate = {
@@ -158,6 +164,9 @@ export function createProject(name: string, overrides: Partial<Project> = {}): P
       processingFeePct: 0,
     },
     interiorsBudget: 0,
+    rentDuringConstruction: 0,
+    rentEscalationPct: 0.08,
+    handoverDate: '',
     ...overrides,
   }
 }
