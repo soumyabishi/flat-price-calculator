@@ -41,7 +41,7 @@ const rentOn = computed(() => props.project.rentOn)
 <template>
   <UCard class="rounded-xl border-default">
     <div class="text-muted">Total flat cost</div>
-    <div class="mt-1 text-3xl sm:text-4xl font-bold tabular-nums tracking-tight">
+    <div class="mt-1 text-3xl sm:text-4xl font-bold tabular-num tracking-tight">
       {{ formatINR(animatedTotal) }}
     </div>
     <div class="mt-1 text-xs text-muted">
@@ -55,17 +55,17 @@ const rentOn = computed(() => props.project.rentOn)
       <div class="flex items-baseline justify-between gap-4">
         <div>
           <span class="font-medium">Base flat cost</span>
-          <span class="text-xs text-muted tabular-nums"> ({{ project.areaSqft.toLocaleString('en-IN') }} × {{ formatINR(project.baseRatePerSqft) }})</span>
+          <span class="text-xs text-muted tabular-num"> ({{ project.areaSqft.toLocaleString('en-IN') }} × {{ formatINR(project.baseRatePerSqft) }})</span>
         </div>
-        <div class="tabular-nums whitespace-nowrap">{{ formatINR(result.baseFlatCost) }}</div>
+        <div class="tabular-num whitespace-nowrap">{{ formatINR(result.baseFlatCost) }}</div>
       </div>
       <div v-if="result.discount > 0" class="flex items-baseline justify-between gap-4 text-success">
         <div class="font-medium">Builder discount ({{ (project.discountPct * 100).toFixed(1) }}%)</div>
-        <div class="tabular-nums whitespace-nowrap">− {{ formatINR(result.discount) }}</div>
+        <div class="tabular-num whitespace-nowrap">− {{ formatINR(result.discount) }}</div>
       </div>
       <div class="flex items-baseline justify-between gap-4">
         <div class="font-semibold">Net flat cost</div>
-        <div class="tabular-nums whitespace-nowrap font-semibold">{{ formatINR(result.netFlatCost) }}</div>
+        <div class="tabular-num whitespace-nowrap font-semibold">{{ formatINR(result.netFlatCost) }}</div>
       </div>
     </div>
 
@@ -87,7 +87,7 @@ const rentOn = computed(() => props.project.rentOn)
             />
             {{ cat.label }}
           </span>
-          <span class="flex items-center gap-2 tabular-nums">
+          <span class="flex items-center gap-2 tabular-num">
             {{ formatINR(cat.subtotal) }}
             <UIcon
               name="i-ph-caret-down"
@@ -107,7 +107,7 @@ const rentOn = computed(() => props.project.rentOn)
           <USeparator />
           <div class="flex justify-between text-sm text-muted">
             <span>{{ cat.label }} subtotal</span>
-            <span class="tabular-nums">{{ formatINR(cat.subtotal) }}</span>
+            <span class="tabular-num">{{ formatINR(cat.subtotal) }}</span>
           </div>
         </div>
       </details>
@@ -119,7 +119,7 @@ const rentOn = computed(() => props.project.rentOn)
         <div class="text-lg font-bold">All-inclusive price</div>
         <div class="text-xs text-muted mt-0.5">Flat + builder + government + possession</div>
       </div>
-      <div class="text-2xl font-bold tabular-nums text-right">
+      <div class="text-2xl font-bold tabular-num text-right">
         {{ formatINR(result.grandTotal) }}
       </div>
     </div>
@@ -131,7 +131,7 @@ const rentOn = computed(() => props.project.rentOn)
           <span class="font-medium">TDS 1% (not in total)</span>
           <div class="text-xs mt-0.5">Deducted from builder payment · deposit via Form 26QB</div>
         </div>
-        <div class="tabular-nums whitespace-nowrap">{{ formatINR(result.tds) }}</div>
+        <div class="tabular-num whitespace-nowrap">{{ formatINR(result.tds) }}</div>
       </div>
 
       <div v-if="interiorsOn" class="flex items-baseline justify-between gap-4">
@@ -139,7 +139,7 @@ const rentOn = computed(() => props.project.rentOn)
           <span class="font-medium">Interiors / move-in (not in total)</span>
           <div class="text-xs mt-0.5">Own spending, outside the builder quote</div>
         </div>
-        <div class="tabular-nums whitespace-nowrap">{{ formatINR(project.interiorsBudget) }}</div>
+        <div class="tabular-num whitespace-nowrap">{{ formatINR(project.interiorsBudget) }}</div>
       </div>
     </div>
 
@@ -151,7 +151,7 @@ const rentOn = computed(() => props.project.rentOn)
           All-inclusive + {{ formatINR(project.interiorsBudget, { compact: true }) }} interiors
         </div>
       </div>
-      <div class="text-lg font-bold tabular-nums text-right">
+      <div class="text-lg font-bold tabular-num text-right">
         {{ formatINR(result.cashNeeded) }}
       </div>
     </div>
@@ -167,7 +167,7 @@ const rentOn = computed(() => props.project.rentOn)
           ₹{{ project.rentDuringConstruction.toLocaleString('en-IN') }}/mo × {{ result.monthsToHandover }} months{{ result.rentEstimated ? ' (handover date not set — assuming 18)' : ' to handover' }}{{ (project.rentEscalationPct || 0) > 0 ? ` · ${(project.rentEscalationPct * 100).toFixed(0)}% / yr` : '' }}
         </div>
       </div>
-      <div class="tabular-nums whitespace-nowrap">{{ formatINR(result.rentOutlay) }}</div>
+      <div class="tabular-num whitespace-nowrap">{{ formatINR(result.rentOutlay) }}</div>
     </div>
 
     <!-- total cash impact (includes rent outlay) -->
@@ -181,7 +181,7 @@ const rentOn = computed(() => props.project.rentOn)
           Move-in cost + {{ formatINR(result.rentOutlay, { compact: true }) }} rent during construction
         </div>
       </div>
-      <div class="text-lg font-bold tabular-nums text-right">
+      <div class="text-lg font-bold tabular-num text-right">
         {{ formatINR(result.cashNeeded + result.rentOutlay) }}
       </div>
     </div>
@@ -190,7 +190,7 @@ const rentOn = computed(() => props.project.rentOn)
     <div v-if="project.loan.enabled" class="mt-4 rounded-lg bg-elevated/50 p-3 text-sm">
       <div class="flex items-center justify-between">
         <span class="font-medium flex items-center gap-1.5"><UIcon name="i-ph-bank" class="size-4 text-muted" /> Loan</span>
-        <span class="tabular-nums">{{ formatINR(project.loan.loanAmount) }} @ {{ project.loan.interestRate }}% × {{ project.loan.tenureYears }}y</span>
+        <span class="tabular-num">{{ formatINR(project.loan.loanAmount) }} @ {{ project.loan.interestRate }}% × {{ project.loan.tenureYears }}y</span>
       </div>
       <div class="text-xs text-muted mt-1">EMI & interest computation coming soon — inputs are saved</div>
     </div>

@@ -14,7 +14,10 @@ export default defineNuxtConfig({
     fallback: 'dark'
   },
   fonts: {
-    families: [{ name: 'Figtree', provider: 'google' }]
+    families: [
+      { name: 'Figtree', provider: 'google' },
+      { name: 'Google Sans Code', provider: 'google' }
+    ]
   },
   css: ['~/assets/css/main.css']
 })

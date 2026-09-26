@@ -30,9 +30,9 @@ const calc = computed(() => props.item.calculation)
       >
         <div class="min-w-0">
           <span class="font-medium underline decoration-transparent underline-offset-2 transition-colors group-hover/item:decoration-current" :class="isTds ? '' : ''">{{ item.item.label }}</span>
-          <span v-if="calc && calc !== '—' && !calc.startsWith('No')" class="text-xs text-muted tabular-nums"> ({{ calc }})</span>
+          <span v-if="calc && calc !== '—' && !calc.startsWith('No')" class="text-xs text-muted tabular-num"> ({{ calc }})</span>
         </div>
-        <div class="tabular-nums whitespace-nowrap text-right" :class="isTds ? 'text-muted' : 'font-medium'">
+        <div class="tabular-num whitespace-nowrap text-right" :class="isTds ? 'text-muted' : 'font-medium'">
           {{ formatINR(item.amount) }}
         </div>
       </div>
@@ -53,9 +53,9 @@ const calc = computed(() => props.item.calculation)
       <div class="min-w-0 text-muted text-xs">
         <span class="mr-1">↳</span>
         <span class="font-medium">GST</span>
-        <span class="tabular-nums"> ({{ formatPercent(item.item.gstRate) }} of {{ formatINR(item.amount) }})</span>
+        <span class="tabular-num"> ({{ formatPercent(item.item.gstRate) }} of {{ formatINR(item.amount) }})</span>
       </div>
-      <div class="tabular-nums whitespace-nowrap text-right text-xs">{{ formatINR(item.gst) }}</div>
+      <div class="tabular-num whitespace-nowrap text-right text-xs">{{ formatINR(item.gst) }}</div>
     </div>
   </div>
 </template>

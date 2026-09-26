@@ -95,31 +95,31 @@ function itemTotal(projectId: string, sectionKey: string, itemId: string) {
           <tbody>
             <tr class="border-b border-default">
               <td class="py-3 font-semibold">Grand total</td>
-              <td v-for="p in projects" :key="p.id" class="py-3 text-right px-4 tabular-nums text-lg font-bold">
+              <td v-for="p in projects" :key="p.id" class="py-3 text-right px-4 tabular-num text-lg font-bold">
                 {{ formatINR(res(p.id)?.grandTotal ?? 0) }}
               </td>
             </tr>
             <tr class="border-b border-default">
               <td class="py-2 text-muted">All-inclusive / sq.ft.</td>
-              <td v-for="p in projects" :key="p.id" class="py-2 text-right px-4 tabular-nums text-muted">
+              <td v-for="p in projects" :key="p.id" class="py-2 text-right px-4 tabular-num text-muted">
                 ₹{{ (res(p.id)?.perSqft ?? 0).toLocaleString('en-IN', { maximumFractionDigits: 0 }) }}
               </td>
             </tr>
             <tr class="border-b border-default">
               <td class="py-2 text-muted">Net flat cost</td>
-              <td v-for="p in projects" :key="p.id" class="py-2 text-right px-4 tabular-nums">
+              <td v-for="p in projects" :key="p.id" class="py-2 text-right px-4 tabular-num">
                 {{ formatINR(res(p.id)?.netFlatCost ?? 0) }}
               </td>
             </tr>
             <tr class="border-b border-default">
               <td class="py-2 text-muted">Sale consideration (incl. GST)</td>
-              <td v-for="p in projects" :key="p.id" class="py-2 text-right px-4 tabular-nums">
+              <td v-for="p in projects" :key="p.id" class="py-2 text-right px-4 tabular-num">
                 {{ formatINR((res(p.id)?.saleConsideration ?? 0) + (res(p.id)?.sections.find((s: { key: string }) => s.key === 'builder')?.items.find((i: { item: { id: string } }) => i.item.id === 'base-gst')?.total ?? 0)) }}
               </td>
             </tr>
             <tr class="border-b border-default bg-elevated/30">
               <td class="py-2 font-medium">vs baseline</td>
-              <td v-for="p in projects" :key="p.id" class="py-2 text-right px-4 tabular-nums font-medium">
+              <td v-for="p in projects" :key="p.id" class="py-2 text-right px-4 tabular-num font-medium">
                 <template v-if="p.id === baselineId">—</template>
                 <template v-else>
                   <span :class="(res(p.id)?.grandTotal ?? 0) - (res(baselineId)?.grandTotal ?? 0) > 0 ? 'text-error' : 'text-success'">
@@ -142,7 +142,7 @@ function itemTotal(projectId: string, sectionKey: string, itemId: string) {
                 class="border-b border-default/40"
               >
                 <td class="py-1.5 text-muted">{{ itemLabel(sectionKey, itemId) }}</td>
-                <td v-for="p in projects" :key="p.id" class="py-1.5 text-right px-4 tabular-nums">
+                <td v-for="p in projects" :key="p.id" class="py-1.5 text-right px-4 tabular-num">
                   <template v-if="itemTotal(p.id, sectionKey, itemId) !== undefined">
                     {{ formatINR(itemTotal(p.id, sectionKey, itemId)!) }}
                   </template>

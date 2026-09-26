@@ -45,25 +45,25 @@ function res(id: string) {
       <tbody>
         <tr class="border-b border-default/50">
           <td class="py-2 font-medium">Grand total</td>
-          <td v-for="p in projects" :key="p.id" class="py-2 text-right tabular-nums font-semibold">
+          <td v-for="p in projects" :key="p.id" class="py-2 text-right tabular-num font-semibold">
             {{ formatINR(res(p.id)?.grandTotal ?? 0) }}
           </td>
         </tr>
         <tr class="border-b border-default">
           <td class="py-2 text-muted">All-inclusive / sq.ft.</td>
-          <td v-for="p in projects" :key="p.id" class="py-2 text-right tabular-nums text-muted">
+          <td v-for="p in projects" :key="p.id" class="py-2 text-right tabular-num text-muted">
             ₹{{ (res(p.id)?.perSqft ?? 0).toLocaleString('en-IN', { maximumFractionDigits: 0 }) }}
           </td>
         </tr>
         <tr class="border-b border-default">
           <td class="py-2 text-muted">Net flat cost</td>
-          <td v-for="p in projects" :key="p.id" class="py-2 text-right tabular-nums">
+          <td v-for="p in projects" :key="p.id" class="py-2 text-right tabular-num">
             {{ formatINR(res(p.id)?.netFlatCost ?? 0) }}
           </td>
         </tr>
         <tr class="border-b border-default">
           <td class="py-2 text-muted">vs baseline</td>
-          <td v-for="p in projects" :key="p.id" class="py-2 text-right tabular-nums">
+          <td v-for="p in projects" :key="p.id" class="py-2 text-right tabular-num">
             <template v-if="p.id === baselineId">—</template>
             <template v-else>
               <span :class="(res(p.id)?.grandTotal ?? 0) - (res(baselineId)?.grandTotal ?? 0) > 0 ? 'text-error' : 'text-success'">
@@ -87,7 +87,7 @@ function res(id: string) {
             class="border-b border-default/50"
           >
             <td class="py-1.5 text-muted">{{ item.item.label }}</td>
-            <td v-for="p in projects" :key="p.id" class="py-1.5 text-right tabular-nums">
+            <td v-for="p in projects" :key="p.id" class="py-1.5 text-right tabular-num">
               <template v-if="res(p.id)?.sections.find(s => s.key === sectionKey)?.items.find(i => i.item.id === item.item.id)">
                 {{ formatINR(res(p.id)!.sections.find(s => s.key === sectionKey)!.items.find(i => i.item.id === item.item.id)!.total) }}
               </template>

@@ -3,6 +3,12 @@
 
 @theme {
   --font-sans: 'Figtree', sans-serif;
+  --font-mono: 'Google Sans Code', ui-monospace, monospace;
+}
+
+.tabular-num {
+  font-family: 'Google Sans Code', ui-monospace, monospace;
+  font-variant-numeric: tabular-num;
 }
 
 :root {
