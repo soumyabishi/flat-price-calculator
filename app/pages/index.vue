@@ -26,6 +26,13 @@ function itemsFor(project: { items: ChargeItem[] }, section: string): ChargeItem
 }
 
 const fileInput = ref<HTMLInputElement | null>(null)
+
+const deleteTarget = ref<{ id: string, name: string } | undefined>()
+function confirmDelete() {
+  if (!deleteTarget.value) return
+  removeProject(deleteTarget.value.id)
+  deleteTarget.value = undefined
+}
 function onImport(e: Event) {
   const target = e.target as HTMLInputElement
   const file = target.files?.[0]
@@ -101,22 +108,65 @@ function onExport() {
         </div>
 
         <div class="mt-4 flex items-center gap-2 flex-wrap">
-          <UButton
-            v-for="p in projects"
-            :key="p.id"
-            size="sm"
-            :variant="p.id === active.id ? 'solid' : 'outline'"
-            color="neutral"
-            @click="activeId = p.id"
-          >
-            {{ p.name }}
-          </UButton>
+          <UFieldGroup v-for="p in projects" :key="p.id">
+            <UButton
+              :variant="p.id === active.id ? 'solid' : 'outline'"
+              color="neutral"
+              :label="p.name"
+              @click="activeId = p.id"
+            />
+            <UDropdownMenu
+              :items="[[
+                { label: 'Duplicate', icon: 'i-ph-copy', onSelect: () => duplicateProject(p.id) },
+                { label: 'Remove', icon: 'i-ph-trash', color: 'error' as const, onSelect: () => deleteTarget = p },
+              ]]"
+              :content="{ align: 'end' }"
+            >
+              <UButton
+                size="sm"
+                :variant="p.id === active.id ? 'solid' : 'outline'"
+                color="neutral"
+                icon="i-ph-dots-three-vertical"
+                :aria-label="`More actions for ${p.name}`"
+                class="!px-1.5"
+              />
+            </UDropdownMenu>
+          </UFieldGroup>
           <UButton size="sm" variant="ghost" color="neutral" icon="i-ph-plus" @click="addProject(`Project ${projects.length + 1}`)">
             New
           </UButton>
         </div>
         <USeparator class="mt-5" />
       </header>
+
+      <!-- Delete confirmation modal -->
+      <UModal
+        :open="deleteTarget !== undefined"
+        :overlay="true"
+        @update:open="(v) => { if (!v) deleteTarget = undefined }"
+      >
+        <template #content>
+          <div class="p-6 space-y-4">
+            <div class="flex items-start gap-3">
+              <UIcon name="i-ph-warning-circle" class="size-6 text-warning shrink-0" />
+              <div>
+                <h3 class="font-semibold">Delete project</h3>
+                <p class="text-sm text-muted mt-1">
+                  Delete <span class="font-medium text-default">{{ deleteTarget?.name }}</span>? All its rates and charges will be removed. This cannot be undone.
+                </p>
+              </div>
+            </div>
+            <div class="flex justify-end gap-2">
+              <UButton variant="ghost" color="neutral" size="sm" @click="deleteTarget = undefined">
+                Cancel
+              </UButton>
+              <UButton color="error" size="sm" icon="i-ph-trash" @click="confirmDelete">
+                Delete
+              </UButton>
+            </div>
+          </div>
+        </template>
+      </UModal>
 
       <div class="grid gap-8 lg:grid-cols-[2fr_3fr]">
         <!-- LEFT: inputs -->
