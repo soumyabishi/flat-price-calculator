@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { NavigationMenuItem } from '@nuxt/ui'
 import { formatINR } from '~/composables/computeProject'
+import { SHEET_PEEK } from '~/composables/sheetPeek'
 import { usePrintSummary } from '~/composables/usePrintSummary'
 import type { ChargeItem } from '~/composables/useProjectConfig'
 
@@ -101,6 +102,8 @@ const deleteTarget = ref<{ id: string, name: string } | undefined>()
 
 const { printSummary } = usePrintSummary()
 
+const isDesktop = useMediaQuery('(min-width: 1024px)')
+
 function confirmDelete() {
   if (!deleteTarget.value) return
   removeProject(deleteTarget.value.id)
@@ -137,6 +140,9 @@ const leftWidth = ref(50)
 const dragging = ref(false)
 const splitContainer = ref<HTMLElement | null>(null)
 
+/** The resizable split only exists on large screens. */
+const leftStyle = computed(() => (isDesktop.value ? { width: leftWidth.value + '%' } : {}))
+
 function onDragStart(e: PointerEvent) {
   dragging.value = true
   const handle = e.currentTarget as HTMLElement
@@ -160,16 +166,17 @@ function onDragStart(e: PointerEvent) {
 
 <template>
   <div class="h-screen flex flex-col bg-default text-default overflow-hidden print-root">
-    <UContainer class="shrink-0 py-2.5 w-full  border-b border-b-default">
+    <UContainer class="shrink-0 py-2.5 w-full  border-b border-b-default print:hidden">
       <header>
-        <div class="flex items-center gap-3 print:hidden">
+        <div class="flex items-center gap-3">
           <div class="flex items-center gap-2.5 shrink-0">
             <UIcon name="i-ph-buildings-fill" class="size-5 text-primary shrink-0" />
             <span class="text-lg font-bold tracking-tight">FlatBuy</span>
             <UBadge color="neutral" variant="subtle" size="sm">v2</UBadge>
           </div>
 
-          <div class="flex items-center gap-2 flex-1 min-w-0 overflow-x-auto scrollbar-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <!-- Project tabs get their own scrollable row on small screens. -->
+          <div class="hidden sm:flex items-center gap-2 flex-1 min-w-0 overflow-x-auto scrollbar-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <UFieldGroup v-for="p in projects" :key="p.id" class="shrink-0">
               <UButton
                 :variant="p.id === active.id ? 'solid' : 'outline'"
@@ -200,16 +207,20 @@ function onDragStart(e: PointerEvent) {
             </UButton>
           </div>
 
-          <div class="flex items-center gap-2 shrink-0">
+          <!-- Tabs own the free space; actions stay content-sized so the project
+               names span the full header width as they did before. `ml-auto`
+               only matters below sm, where the tabs are on their own row. -->
+          <div class="flex items-center gap-2 shrink-0 ml-auto sm:ml-0">
             <UButton
               :variant="dirty ? 'solid' : 'outline'"
               :color="dirty ? 'success' : 'neutral'"
               size="sm"
               :icon="justSaved ? 'i-ph-check' : 'i-ph-floppy-disk'"
               :disabled="!dirty"
+              :aria-label="dirty ? 'Save project' : 'All changes saved'"
               @click="onSave"
             >
-              {{ justSaved ? 'Saved' : dirty ? 'Save' : 'Saved' }}
+              <span class="hidden sm:inline">{{ justSaved ? 'Saved' : dirty ? 'Save' : 'Saved' }}</span>
             </UButton>
             <UButton
               to="/compare"
@@ -218,8 +229,9 @@ function onDragStart(e: PointerEvent) {
               size="sm"
               icon="i-ph-scales"
               :disabled="projects.length < 2"
+              aria-label="Compare projects"
             >
-              Compare
+              <span class="hidden sm:inline">Compare</span>
             </UButton>
             <UDropdownMenu
               :items="[[
@@ -231,10 +243,42 @@ function onDragStart(e: PointerEvent) {
                 { label: 'Delete current', icon: 'i-ph-trash', color: 'error' as const, onSelect: () => removeProject(active.id) },
               ]]"
             >
-              <UButton icon="i-ph-dots-three" variant="outline" color="neutral" size="sm" />
+              <UButton icon="i-ph-dots-three" variant="outline" color="neutral" size="sm" aria-label="More actions" />
             </UDropdownMenu>
             <input ref="fileInput" type="file" accept=".json" class="hidden" @change="onImport">
           </div>
+        </div>
+
+        <!-- Mobile-only project switcher -->
+        <div class="sm:hidden -mx-4 mt-2.5 px-4 flex items-center gap-2 overflow-x-auto scrollbar-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <UFieldGroup v-for="p in projects" :key="p.id" class="shrink-0">
+            <UButton
+              :variant="p.id === active.id ? 'solid' : 'outline'"
+              color="neutral"
+              size="sm"
+              :label="p.name"
+              @click="activeId = p.id"
+            />
+            <UDropdownMenu
+              :items="[[
+                { label: 'Duplicate', icon: 'i-ph-copy', onSelect: () => duplicateProject(p.id) },
+                { label: 'Remove', icon: 'i-ph-trash', color: 'error' as const, onSelect: () => deleteTarget = p },
+              ]]"
+              :content="{ align: 'start' }"
+            >
+              <UButton
+                size="sm"
+                :variant="p.id === active.id ? 'solid' : 'outline'"
+                color="neutral"
+                icon="i-ph-dots-three-vertical"
+                :aria-label="`More actions for ${p.name}`"
+                class="!px-1.5"
+              />
+            </UDropdownMenu>
+          </UFieldGroup>
+          <UButton size="sm" variant="ghost" color="neutral" icon="i-ph-plus" class="shrink-0" @click="addProject(`Project ${projects.length + 1}`)">
+            New
+          </UButton>
         </div>
       </header>
     </UContainer>
@@ -268,11 +312,25 @@ function onDragStart(e: PointerEvent) {
         </template>
     </UModal>
 
-    <!-- Custom split: inputs left, summary right; draggable divider, each panel scrolls independently -->
+    <!-- Custom split: inputs left, summary right; draggable divider, each panel scrolls independently.
+         Below lg the divider disappears, inputs take the full width and the summary becomes a bottom sheet. -->
     <div class="flex-1 min-h-0 w-full flex print-split">
-      <section class="h-full px-4 sm:px-6 py-6 flex gap-6 print:hidden" :style="{ width: leftWidth + '%' }">
-        <!-- Left panel: sticky nav -->
-        <div class="h-full shrink-0">
+      <!-- No bottom padding below lg: the prev/next bar rests directly on the
+           summary sheet, so any padding here would push it off the sheet edge. -->
+      <section class="h-full w-full min-w-0 flex-1 px-4 sm:px-6 pt-4 sm:pt-6 pb-0 lg:pb-6 flex flex-col lg:flex-row gap-4 sm:gap-6 print:hidden lg:flex-none" :style="leftStyle">
+        <!-- Small screens: horizontal step strip -->
+        <div class="lg:hidden shrink-0 -mx-4 px-4 overflow-x-auto overscroll-x-contain scrollbar-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <UNavigationMenu
+            orientation="horizontal"
+            color="primary"
+            variant="pill"
+            :items="navItems"
+            class="w-max"
+          />
+        </div>
+
+        <!-- Large screens: sticky vertical rail -->
+        <div class="hidden lg:block h-full shrink-0">
           <div class="sticky top-0">
             <div class="mb-3">
               <h2 class="text-base font-semibold text-highlighted">Project details</h2>
@@ -289,12 +347,16 @@ function onDragStart(e: PointerEvent) {
         </div>
 
         <!-- Right: form section -->
-        <div class="flex-1 min-w-0 overflow-y-auto overflow-x-hidden">
+        <div class="flex-1 min-w-0 overflow-y-auto overflow-x-hidden flex flex-col">
+          <!-- Fills a short form so the prev/next bar is pushed down onto the
+               summary sheet. `lg:flex-none` keeps the desktop layout exactly
+               as it was, with the bar sitting right after the content. -->
+          <div class="flex-1 lg:flex-none">
             <div v-if="activeTab === 'basic'">
               <div>
                 <div class="rounded-lg border border-default p-4 space-y-4">
-                  <UFormField label="Project name" size="md">
-                    <UInput v-model="active.name" class="w-full" placeholder="e.g. Rajapushpa Imperia C-2204" />
+                  <UFormField label="Project name">
+                    <UInput v-model="active.name" size="xl" class="w-full" placeholder="e.g. Rajapushpa Imperia C-2204" />
                   </UFormField>
 
                   <div class="grid grid-cols-2 gap-4">
@@ -340,8 +402,7 @@ function onDragStart(e: PointerEvent) {
                       ]"
                       variant="card"
                       orientation="horizontal"
-                      size="sm"
-                      :ui="{ fieldset: 'w-full gap-x-3', item: 'flex-1 rounded-lg px-3 py-2.5' }"
+                      :ui="{ fieldset: 'w-full gap-x-3 !flex-col sm:!flex-row', item: 'flex-1 rounded-lg px-3 py-2.5 min-w-0' }"
                     />
                   </UFormField>
 
@@ -594,33 +655,47 @@ function onDragStart(e: PointerEvent) {
                 </section>
               </div>
             </div>
+          </div>
 
-            <!-- Sticky prev / next -->
-            <div class="sticky bottom-0 z-10 -mx-2 sm:-mx-4 px-4 sm:px-6 py-3 bg-default/90 backdrop-blur border-t border-default mt-6 flex items-center justify-between gap-3">
+            <!-- Sticky prev / next. Below lg the bar rests on the collapsed
+                 sheet's top edge, so `SHEET_PEEK` is what keeps it flush
+                 instead of floating with a gap above the peek. -->
+            <div
+              class="sticky z-10 -mx-2 sm:-mx-4 px-4 sm:px-6 py-3 bg-default/90 backdrop-blur border-t border-default mt-6 flex items-center justify-between gap-3"
+              :style="{ bottom: isDesktop ? '0px' : SHEET_PEEK + 'px' }"
+            >
               <UButton
                 v-if="prevStep"
                 variant="outline"
                 color="neutral"
                 icon="i-ph-arrow-left"
-                :label="prevStep.title"
+                class="min-w-0 max-w-[45%]"
                 @click="activeTab = prevStep.value"
-              />
+              >
+                <span class="truncate">
+                  <span class="hidden sm:inline">Back: </span>{{ prevStep.title }}
+                </span>
+              </UButton>
               <span v-else />
               <UButton
                 v-if="nextStep"
                 variant="solid"
                 color="primary"
                 trailing-icon="i-ph-arrow-right"
-                :label="`Next: ${nextStep.title}`"
+                class="min-w-0 max-w-[55%]"
                 @click="activeTab = nextStep.value"
-              />
+              >
+                <span class="truncate">
+                  <span class="hidden sm:inline">Next: </span>{{ nextStep.title }}
+                </span>
+              </UButton>
             </div>
         </div>
       </section>
 
-      <!-- Drag handle -->
+      <!-- Drag handle (large screens only) -->
       <div
-        class="relative w-px shrink-0 cursor-col-resize bg-default border-r border-accented/60"
+        class="hidden lg:block relative w-px shrink-0 cursor-col-resize bg-default border-r border-accented/60"
         @pointerdown="onDragStart"
       >
         <!-- wide hit area + hover rail -->
@@ -638,11 +713,7 @@ function onDragStart(e: PointerEvent) {
         </div>
       </div>
 
-      <section class="h-full overflow-y-auto px-4 sm:px-6 py-6 flex-1 min-w-0 bg-black/20 print-pane">
-        <div class="max-w-[210mm] mx-auto">
-          <SummaryCard :project="active" />
-        </div>
-      </section>
+      <SummaryPane :project="active" />
     </div>
   </div>
 </template>

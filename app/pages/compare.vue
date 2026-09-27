@@ -47,22 +47,22 @@ function itemTotal(projectId: string, sectionKey: string, itemId: string) {
 
 <template>
   <div class="min-h-screen bg-default text-default">
-    <UContainer class="py-8 max-w-none px-6 sm:px-10">
-      <header class="mb-8">
+    <UContainer class="py-6 sm:py-8 max-w-none px-4 sm:px-6 lg:px-10">
+      <header class="mb-6 sm:mb-8">
         <div class="flex items-center justify-between gap-4 flex-wrap">
-          <div class="flex items-center gap-3">
+          <div class="flex items-center gap-3 min-w-0">
             <div class="flex items-center justify-center size-11 rounded-xl bg-primary text-inverted shrink-0">
               <UIcon name="i-ph-scales" class="size-6" />
             </div>
-            <div>
+            <div class="min-w-0">
               <span class="text-sm font-semibold tracking-wide text-muted uppercase">FlatBuy</span>
-              <h1 class="text-2xl sm:text-3xl font-bold text-highlighted leading-tight">
+              <h1 class="text-xl sm:text-3xl font-bold text-highlighted leading-tight">
                 Compare projects
               </h1>
             </div>
           </div>
           <UButton to="/" variant="outline" color="neutral" size="sm" icon="i-ph-arrow-left">
-            Calculator
+            <span class="hidden sm:inline">Calculator</span>
           </UButton>
         </div>
         <p class="mt-2 text-sm text-muted">
@@ -71,11 +71,12 @@ function itemTotal(projectId: string, sectionKey: string, itemId: string) {
         <USeparator class="mt-5" />
       </header>
 
-      <div class="w-full">
-        <table class="w-full text-sm">
+      <!-- Wide comparison grid: scroll it sideways on phones, pin the row labels. -->
+      <div class="-mx-4 sm:mx-0 overflow-x-auto overscroll-x-contain">
+        <table class="w-full min-w-[36rem] text-sm">
           <thead>
             <tr class="border-b border-default">
-              <th class="py-3 text-left font-medium text-muted min-w-40">Project</th>
+              <th class="py-3 text-left font-medium text-muted w-40 min-w-40 sticky left-0 z-10 bg-default">Project</th>
               <th
                 v-for="p in projects"
                 :key="p.id"
@@ -94,13 +95,13 @@ function itemTotal(projectId: string, sectionKey: string, itemId: string) {
           </thead>
           <tbody>
             <tr class="border-b border-default">
-              <td class="py-3 font-semibold">Grand total</td>
+              <td class="sticky left-0 z-10 bg-default py-3 font-semibold">Grand total</td>
               <td v-for="p in projects" :key="p.id" class="py-3 text-right px-4 tabular-num text-lg font-bold">
                 {{ formatINR(res(p.id)?.grandTotal ?? 0) }}
               </td>
             </tr>
             <tr class="border-b border-default">
-              <td class="py-2 text-muted">Rate / sq.ft. → All-inclusive / sq.ft.</td>
+              <td class="sticky left-0 z-10 bg-default py-2 text-muted">Rate / sq.ft. → All-inclusive / sq.ft.</td>
               <td v-for="p in projects" :key="p.id" class="py-2 text-right px-4">
                 <span class="tabular-num">₹{{ (p.baseRatePerSqft ?? 0).toLocaleString('en-IN', { maximumFractionDigits: 0 }) }}</span>
                 <span class="text-muted mx-1">→</span>
@@ -108,19 +109,19 @@ function itemTotal(projectId: string, sectionKey: string, itemId: string) {
               </td>
             </tr>
             <tr class="border-b border-default">
-              <td class="py-2 text-muted">Net flat cost</td>
+              <td class="sticky left-0 z-10 bg-default py-2 text-muted">Net flat cost</td>
               <td v-for="p in projects" :key="p.id" class="py-2 text-right px-4 tabular-num">
                 {{ formatINR(res(p.id)?.netFlatCost ?? 0) }}
               </td>
             </tr>
             <tr class="border-b border-default">
-              <td class="py-2 text-muted">Sale consideration (incl. GST)</td>
+              <td class="sticky left-0 z-10 bg-default py-2 text-muted">Sale consideration (incl. GST)</td>
               <td v-for="p in projects" :key="p.id" class="py-2 text-right px-4 tabular-num">
                 {{ formatINR((res(p.id)?.saleConsideration ?? 0) + (res(p.id)?.sections.find((s: { key: string }) => s.key === 'builder')?.items.find((i: { item: { id: string } }) => i.item.id === 'base-gst')?.total ?? 0)) }}
               </td>
             </tr>
             <tr class="border-b border-default bg-elevated/30">
-              <td class="py-2 font-medium">vs baseline</td>
+              <td class="sticky left-0 z-10 bg-elevated/30 py-2 font-medium">vs baseline</td>
               <td v-for="p in projects" :key="p.id" class="py-2 text-right px-4 tabular-num font-medium">
                 <template v-if="p.id === baselineId">—</template>
                 <template v-else>
@@ -133,7 +134,7 @@ function itemTotal(projectId: string, sectionKey: string, itemId: string) {
 
             <template v-for="sectionKey in ['builder', 'government', 'possession']" :key="sectionKey">
               <tr class="border-b border-default">
-                <td class="pt-5 pb-1 font-semibold text-xs uppercase tracking-wide text-muted" colspan="1">
+                <td class="sticky left-0 z-10 bg-default pt-5 pb-1 font-semibold text-xs uppercase tracking-wide text-muted" colspan="1">
                   {{ sectionKey === 'builder' ? 'Builder charges' : sectionKey === 'government' ? 'Government charges' : 'Possession charges' }}
                 </td>
                 <td v-for="p in projects" :key="p.id" />
@@ -143,7 +144,7 @@ function itemTotal(projectId: string, sectionKey: string, itemId: string) {
                 :key="itemId"
                 class="border-b border-default/40"
               >
-                <td class="py-1.5 text-muted">{{ itemLabel(sectionKey, itemId) }}</td>
+                <td class="sticky left-0 z-10 bg-default py-1.5 text-muted">{{ itemLabel(sectionKey, itemId) }}</td>
                 <td v-for="p in projects" :key="p.id" class="py-1.5 text-right px-4 tabular-num">
                   <template v-if="itemTotal(p.id, sectionKey, itemId) !== undefined">
                     {{ formatINR(itemTotal(p.id, sectionKey, itemId)!) }}

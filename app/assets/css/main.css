@@ -82,9 +82,33 @@
     overflow: visible !important;
   }
 
+  /* The summary is a bottom sheet on small screens. On paper it is the
+     document again, so drop the overlay geometry and the collapsed offset. */
   .print-pane {
+    position: static !important;
+    inset: auto !important;
+    z-index: auto !important;
+    max-height: none !important;
+    border-radius: 0 !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    transform: none !important;
+    transition: none !important;
     padding: 0 !important;
     background: #fff !important;
+  }
+
+  .sheet-bar {
+    display: none !important;
+  }
+
+  /* The sheet body is a scroll container on screen; on paper it must grow. */
+  .sheet-body {
+    display: block !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    padding: 0 !important;
   }
 
   /* The card's own decorative frame has no meaning on paper. */
@@ -125,5 +149,16 @@
   .print-doc h3 {
     break-after: avoid;
     page-break-after: avoid;
+  }
+
+  /* On screen the Calculation column is folded away whenever the summary box
+     is narrow. Paper is always wide enough and fixed, so the document keeps
+     all three columns and drops the duplicated single-line fallback. */
+  .print-doc .calc-col {
+    display: table-cell !important;
+  }
+
+  .print-doc .calc-fold {
+    display: none !important;
   }
 }
