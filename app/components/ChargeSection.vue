@@ -149,7 +149,7 @@ function setGstSelect(item: ChargeItem, v: string) {
             <UInputNumber
               v-model="item.value"
               :min="0"
-              :step="isGov(item) ? 0.005 : 100"
+              :step="isGov(item) ? 0.005 : 1"
               :increment="false"
               :decrement="false"
               disable-wheel-change

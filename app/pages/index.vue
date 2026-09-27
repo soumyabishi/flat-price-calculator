@@ -357,18 +357,22 @@ function onDragStart(e: PointerEvent) {
                     </div>
                   </UFormField>
 
-                  <UFormField label="Builder discount / offer" size="md" hint="Percentage discount on base price">
-                    <UInputNumber
-                      v-model="active.discountPct"
-                      :min="0"
-                      :max="0.9"
-                      :step="0.005"
-                      :increment="false"
-                      :decrement="false"
-                      disable-wheel-change
-                      :formatOptions="{ maximumFractionDigits: 3 }"
-                      class="w-full"
-                    />
+                  <UFormField label="Builder discount / offer" size="md" hint="Percentage taken off the rate per sq.ft.">
+                    <div class="relative">
+                      <UInputNumber
+                        v-model="active.discountPct"
+                        :min="0"
+                        :max="0.9"
+                        :step="0.005"
+                        :increment="false"
+                        :decrement="false"
+                        disable-wheel-change
+                        :formatOptions="{ maximumFractionDigits: 3 }"
+                        :ui="{ base: 'pr-8 text-lg/7 px-3 py-2 font-medium' }"
+                        class="w-full"
+                      />
+                      <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted">%</span>
+                    </div>
                   </UFormField>
                 </div>
               </div>
@@ -529,7 +533,7 @@ function onDragStart(e: PointerEvent) {
                         <UInputNumber
                           v-model="active.rentDuringConstruction"
                           :min="0"
-                          :step="1000"
+                          :step="1"
                           :increment="false"
                           :decrement="false"
                           disable-wheel-change

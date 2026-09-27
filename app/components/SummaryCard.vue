@@ -49,6 +49,8 @@ type InvoiceRow = {
   id: string
   label: string
   calc?: string
+  /** second line of the calculation */
+  calcSub?: string
   amount: string
   kind: 'item' | 'gst' | 'subtotal' | 'section' | 'info' | 'discount'
   arrow?: boolean
@@ -61,9 +63,16 @@ const rows = computed<InvoiceRow[]>(() => {
 
   out.push({ id: 'base', label: 'Base flat cost', calc: `${props.project.areaSqft.toLocaleString('en-IN')} sq.ft. × ${formatINR(props.project.baseRatePerSqft)}`, amount: formatINR(r.baseFlatCost), kind: 'item' })
   if (r.discount > 0) {
-    out.push({ id: 'discount', label: 'Builder discount', calc: `${(props.project.discountPct * 100).toFixed(1)}% of ${formatINR(r.baseFlatCost)}`, amount: `− ${formatINR(r.discount)}`, kind: 'discount' })
+    out.push({
+      id: 'discount',
+      label: 'Builder discount',
+      calc: `${(props.project.discountPct * 100).toFixed(1)}% off rate`,
+      calcSub: `${formatINR(props.project.baseRatePerSqft)} → ${formatINR(r.netRatePerSqft)} / sq.ft.`,
+      amount: `− ${formatINR(r.discount)}`,
+      kind: 'discount',
+    })
   }
-  out.push({ id: 'net', label: 'Net flat cost', amount: formatINR(r.netFlatCost), kind: 'subtotal' })
+  out.push({ id: 'net', label: 'Net flat cost', calc: `${props.project.areaSqft.toLocaleString('en-IN')} sq.ft. × ${formatINR(r.netRatePerSqft)}`, amount: formatINR(r.netFlatCost), kind: 'subtotal' })
 
   for (const cat of r.sections) {
     const icon = cat.key === 'builder' ? 'i-ph-wrench' : cat.key === 'government' ? 'i-ph-bank' : 'i-ph-key'
@@ -143,6 +152,12 @@ function labelTextClass(kind: InvoiceRow['kind']) {
   return ''
 }
 
+function calcTextClass(kind: InvoiceRow['kind']) {
+  if (kind === 'discount') return 'text-success'
+  if (kind === 'gst' || kind === 'info') return 'text-xs'
+  return ''
+}
+
 function amountClass(kind: InvoiceRow['kind']) {
   if (kind === 'subtotal') return 'text-highlighted'
   if (kind === 'discount') return 'font-medium text-success'
@@ -179,7 +194,10 @@ const columns: TableColumn<InvoiceRow>[] = [
     meta: {
       class: { th: 'w-2/5 text-left text-xs font-medium uppercase tracking-widest text-muted font-mono', td: ({ row }: { row: { original: InvoiceRow } }) => `w-2/5 ${rowClass(row.original.kind)} text-left text-xs text-muted tabular-num whitespace-normal wrap-break-word` },
     },
-    cell: ({ row }) => h('span', row.original.calc ?? ''),
+    cell: ({ row }) => h('span', { class: calcTextClass(row.original.kind) }, [
+      row.original.calc ?? '',
+      row.original.calcSub ? h('span', { class: 'block' }, row.original.calcSub) : null,
+    ]),
   },
   {
     accessorKey: 'amount',
@@ -215,7 +233,7 @@ const columns: TableColumn<InvoiceRow>[] = [
     <USeparator />
 
     <!-- Meta grid -->
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-5 px-6 sm:px-10 py-6 text-sm">
+    <div class="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-5 px-6 sm:px-10 py-6 text-sm">
       <div class="col-span-2 sm:col-span-1">
         <div class="text-[10px] font-mono tracking-[0.2em] text-muted uppercase">Prepared for</div>
         <div class="mt-1.5 font-semibold leading-snug">{{ project.name }}</div>
@@ -232,22 +250,33 @@ const columns: TableColumn<InvoiceRow>[] = [
       <div>
         <div class="text-[10px] font-mono tracking-[0.2em] text-muted uppercase">Rate / sq.ft.</div>
         <div class="mt-1.5 font-medium tabular-num">{{ formatINR(project.baseRatePerSqft) }}</div>
-      </div>
-
-      <div>
-        <div class="text-[10px] font-mono tracking-[0.2em] text-muted uppercase">All-inclusive / sq.ft.</div>
-        <div class="mt-1 font-medium tabular-num">₹{{ result.perSqft.toLocaleString('en-IN', { maximumFractionDigits: 0 }) }}</div>
+        <div v-if="result.discount > 0" class="text-xs text-muted tabular-num">after discount {{ formatINR(result.netRatePerSqft) }}</div>
       </div>
     </div>
 
     <!-- Totals block (moved to top, right under meta) -->
-    <div class="px-6 sm:px-10 py-6 border-b border-default">
-      <div class="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-4">
-        <div>
-          <div class="text-[10px] font-mono tracking-[0.2em] text-muted uppercase">All-inclusive</div>
-          <div class="mt-1 text-2xl font-bold tabular-num text-primary">{{ formatINR(animatedTotal) }}</div>
-          <div class="text-xs text-muted mt-0.5">Flat + builder + govt + possession</div>
+    <div class="px-6 sm:px-10 py-6 border-b border-default space-y-5">
+      <!-- All-inclusive group -->
+      <div class="rounded-lg border border-default p-4">
+        <div class="text-[10px] font-mono tracking-[0.2em] text-muted uppercase">All-inclusive</div>
+        <div class="mt-1 text-2xl font-bold tabular-num text-primary">{{ formatINR(animatedTotal) }}</div>
+        <div class="text-xs text-muted mt-0.5">Flat + builder + govt + possession</div>
+        <div class="mt-3.5 pt-3 border-t border-default grid grid-cols-2 gap-x-6 gap-y-3">
+          <div>
+            <div class="text-lg font-semibold tabular-num">{{ formatINR(result.saleConsideration) }}</div>
+            <div class="text-xs text-muted mt-0.5">Flat + builder</div>
+          </div>
+          <div>
+            <div class="text-lg font-semibold tabular-num">
+              ₹{{ Math.round(result.flatBuilderPerSqft).toLocaleString('en-IN') }}<span class="text-xs font-medium text-muted"> / sq.ft.</span>
+            </div>
+            <div class="text-xs text-muted mt-0.5">All-inclusive rate</div>
+          </div>
         </div>
+      </div>
+
+      <!-- Move-in / total cash impact -->
+      <div v-if="totalLines.length" class="rounded-lg border border-default p-4 grid grid-cols-2 gap-x-6 gap-y-4">
         <div v-for="line in totalLines" :key="line.label">
           <div class="text-[10px] font-mono tracking-[0.2em] text-muted uppercase">{{ line.label }}</div>
           <div class="mt-1 text-2xl font-bold tabular-num">{{ line.value }}</div>

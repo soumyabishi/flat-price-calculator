@@ -35,6 +35,8 @@ export type ComputedSection = {
 
 export type ComputedResult = {
   baseFlatCost: number
+  /** base rate after the builder discount */
+  netRatePerSqft: number
   discount: number
   netFlatCost: number
   /** net flat cost + builder item amounts (GST added separately) */
@@ -46,6 +48,8 @@ export type ComputedResult = {
   cashNeeded: number
   /** all-inclusive price per sqft */
   perSqft: number
+  /** flat + builder (sale consideration) per sqft */
+  flatBuilderPerSqft: number
   tds: number
   gstTotal: number
   /** dynamic formula text: components summed into sale consideration */
@@ -100,10 +104,11 @@ const GOVERNMENT_IDS = new Set(['stamp-duty', 'transfer-duty', 'registration-fee
 export function computeProject(project: Project): ComputedResult {
   const { areaSqft, baseRatePerSqft, discountPct, possessionStatus } = project
 
-  // section 2
+  // section 2 — discount is a reduction on the rate, not on the amount
   const baseFlatCost = areaSqft * baseRatePerSqft
-  const discount = baseFlatCost * (discountPct || 0)
-  const netFlatCost = baseFlatCost - discount
+  const netRatePerSqft = baseRatePerSqft * (1 - (discountPct || 0))
+  const netFlatCost = Math.round(areaSqft * netRatePerSqft)
+  const discount = Math.round(baseFlatCost - netFlatCost)
 
   // active items
   const active = project.items.filter(i =>
@@ -227,6 +232,7 @@ export function computeProject(project: Project): ComputedResult {
 
   return {
     baseFlatCost,
+    netRatePerSqft,
     discount,
     netFlatCost,
     saleConsideration,
@@ -236,6 +242,7 @@ export function computeProject(project: Project): ComputedResult {
     /** grand total + interiors budget (affordability view) */
     cashNeeded: grandTotal + (project.interiorsBudget || 0),
     perSqft: areaSqft > 0 ? grandTotal / areaSqft : 0,
+    flatBuilderPerSqft: areaSqft > 0 ? saleConsideration / areaSqft : 0,
     tds,
     gstTotal,
     ...(() => {
