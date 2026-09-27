@@ -128,7 +128,7 @@ function onExport() {
   URL.revokeObjectURL(url)
 }
 
-const leftWidth = ref(55)
+const leftWidth = ref(50)
 const dragging = ref(false)
 const splitContainer = ref<HTMLElement | null>(null)
 
