@@ -116,26 +116,17 @@ function onExport() {
 </script>
 
 <template>
-  <div class="min-h-screen bg-default text-default">
-    <UContainer class="py-8 sm:py-10 max-w-7xl">
-      <header class="mb-8">
-        <div class="flex items-center justify-between gap-4 flex-wrap">
-          <div class="flex items-center gap-3">
-            <div class="flex items-center justify-center size-11 rounded-xl bg-primary text-inverted shrink-0">
-              <UIcon name="i-ph-buildings" class="size-6" />
-            </div>
-            <div>
-              <div class="flex items-center gap-2">
-                <span class="text-sm font-semibold tracking-wide text-muted uppercase">FlatBuy</span>
-                <UBadge color="neutral" variant="subtle" size="sm">v2</UBadge>
-              </div>
-              <h1 class="text-2xl sm:text-3xl font-bold text-highlighted leading-tight">
-                All-inclusive cost calculator
-              </h1>
-            </div>
+  <div class="h-screen flex flex-col bg-default text-default overflow-hidden">
+    <UContainer class="shrink-0 py-2.5 w-full">
+      <header>
+        <div class="flex items-center justify-between gap-4">
+          <div class="flex items-center gap-2.5 min-w-0">
+            <UIcon name="i-ph-buildings-fill" class="size-5 text-primary shrink-0" />
+            <span class="text-lg font-bold tracking-tight">FlatBuy</span>
+            <UBadge color="neutral" variant="subtle" size="sm">v2</UBadge>
           </div>
 
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-2 shrink-0">
             <UButton
               :variant="dirty ? 'solid' : 'outline'"
               :color="dirty ? 'success' : 'neutral'"
@@ -172,7 +163,7 @@ function onExport() {
           </div>
         </div>
 
-        <div class="mt-4 flex items-center gap-2 flex-wrap">
+        <div class="mt-2.5 flex items-center gap-2 flex-wrap">
           <UFieldGroup v-for="p in projects" :key="p.id">
             <UButton
               :variant="p.id === active.id ? 'solid' : 'outline'"
@@ -201,15 +192,15 @@ function onExport() {
             New
           </UButton>
         </div>
-        <USeparator class="mt-5" />
       </header>
+    </UContainer>
 
-      <!-- Delete confirmation modal -->
-      <UModal
-        :open="deleteTarget !== undefined"
-        :overlay="true"
-        @update:open="(v) => { if (!v) deleteTarget = undefined }"
-      >
+    <!-- Delete confirmation modal -->
+    <UModal
+      :open="deleteTarget !== undefined"
+      :overlay="true"
+      @update:open="(v) => { if (!v) deleteTarget = undefined }"
+    >
         <template #content>
           <div class="p-6 space-y-4">
             <div class="flex items-start gap-3">
@@ -231,16 +222,27 @@ function onExport() {
             </div>
           </div>
         </template>
-      </UModal>
+    </UModal>
 
-      <div class="max-w-3xl mx-auto">
-        <UTabs
-            v-model="activeTab"
-            :items="tabItems"
-            variant="pill"
-            size="md"
-            class="mb-5"
-          >
+    <!-- Splitter: inputs left, summary right; each panel scrolls independently -->
+    <div class="flex-1 min-h-0 w-full">
+      <USplitter
+        id="flatbuy-splitter"
+        :items="[
+          { slot: 'left', minSize: 25, defaultSize: 55 },
+          { slot: 'right', minSize: 25, defaultSize: 45 },
+        ]"
+      >
+        <template #left>
+          <div class="h-full overflow-y-auto px-6 sm:px-10 py-6">
+            <div class="max-w-3xl mx-auto">
+            <UTabs
+              v-model="activeTab"
+              :items="tabItems"
+              variant="pill"
+              size="md"
+              class="mb-5"
+            >
             <template #basic>
               <div class="pt-4">
                 <div class="rounded-lg border border-default p-4 space-y-4">
@@ -542,13 +544,18 @@ function onExport() {
               </div>
             </template>
           </UTabs>
-        </div>
+          </div>
+          </div>
+        </template>
 
-      <!-- BELOW: invoice-style summary -->
-      <USeparator class="mt-10 mb-8" />
-      <div class="max-w-[210mm] mx-auto pb-16">
-        <SummaryCard :project="active" />
-      </div>
-    </UContainer>
+        <template #right>
+          <div class="h-full overflow-y-auto px-6 sm:px-10 py-6">
+            <div class="max-w-[210mm] mx-auto pb-10">
+              <SummaryCard :project="active" />
+            </div>
+          </div>
+        </template>
+      </USplitter>
+    </div>
   </div>
 </template>

@@ -13,6 +13,7 @@
 :root {
   --ui-radius: 0.5rem;
   --ui-primary: black;
+  --ui-container: 100%;
 }
 
 :root, .light {
