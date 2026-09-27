@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import type { TableColumn } from '@nuxt/ui'
 import type { Project } from '~/composables/useProjectConfig'
-import { computeProject, formatINR } from '~/composables/computeProject'
+import { computeProject, formatINR, formatPercent } from '~/composables/computeProject'
 
 const props = defineProps<{
   project: Project
@@ -36,182 +37,254 @@ onMounted(() => {
 
 const interiorsOn = computed(() => props.project.interiorsOn)
 const rentOn = computed(() => props.project.rentOn)
+
+const docNo = computed(() => `EST-${props.project.id.replace(/[^a-zA-Z0-9]/g, '').slice(0, 4).toUpperCase() || '0001'}`)
+const today = computed(() => new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }))
+const possessionLabel = computed(() => props.project.possessionStatus === 'underConstruction' ? 'Under construction' : 'Ready to move')
+
+type InvoiceRow = {
+  id: string
+  label: string
+  calc?: string
+  amount: string
+  kind: 'item' | 'gst' | 'subtotal' | 'section' | 'info' | 'discount'
+  arrow?: boolean
+}
+
+const rows = computed<InvoiceRow[]>(() => {
+  const r = result.value
+  const out: InvoiceRow[] = []
+
+  out.push({ id: 'base', label: 'Base flat cost', calc: `${props.project.areaSqft.toLocaleString('en-IN')} sq.ft. × ${formatINR(props.project.baseRatePerSqft)}`, amount: formatINR(r.baseFlatCost), kind: 'item' })
+  if (r.discount > 0) {
+    out.push({ id: 'discount', label: 'Builder discount', calc: `${(props.project.discountPct * 100).toFixed(1)}% of ${formatINR(r.baseFlatCost)}`, amount: `− ${formatINR(r.discount)}`, kind: 'discount' })
+  }
+  out.push({ id: 'net', label: 'Net flat cost', amount: formatINR(r.netFlatCost), kind: 'subtotal' })
+
+  for (const cat of r.sections) {
+    out.push({ id: `sec-${cat.key}`, label: cat.label, amount: formatINR(cat.subtotal), kind: 'section' })
+    for (const ci of cat.items) {
+      if (ci.item.id === 'base-gst') {
+        out.push({ id: 'sale', label: 'Sale consideration', calc: r.saleFormula, amount: formatINR(r.saleConsideration), kind: 'subtotal' })
+        out.push({ id: 'base-gst', label: 'GST on flat cost', calc: ci.calculation, amount: formatINR(ci.amount), kind: 'gst' })
+        continue
+      }
+      if (ci.item.id === 'tds') continue
+      out.push({
+        id: ci.item.id,
+        label: ci.item.label,
+        calc: ci.calculation && ci.calculation !== '—' && !ci.calculation.startsWith('No') ? ci.calculation : undefined,
+        amount: formatINR(ci.amount),
+        kind: 'item',
+      })
+      if (ci.gst > 0) {
+        out.push({
+          id: `${ci.item.id}-gst`,
+          label: 'GST',
+          calc: `${formatPercent(ci.item.gstRate)} of ${formatINR(ci.amount)}`,
+          amount: formatINR(ci.gst),
+          kind: 'gst',
+          arrow: true,
+        })
+      }
+    }
+    out.push({ id: `sub-${cat.key}`, label: `${cat.label} subtotal`, amount: formatINR(cat.subtotal), kind: 'subtotal' })
+  }
+
+  out.push({ id: 'tds', label: 'TDS 1% (not in total)', calc: 'Deducted from builder payment · Form 26QB', amount: formatINR(r.tds), kind: 'info' })
+  if (interiorsOn.value) {
+    out.push({ id: 'interiors', label: 'Interiors / move-in (not in total)', calc: 'Own spending, outside the builder quote', amount: formatINR(props.project.interiorsBudget), kind: 'info' })
+  }
+  if (rentOn.value && props.project.possessionStatus === 'underConstruction' && props.project.rentDuringConstruction > 0) {
+    out.push({
+      id: 'rent',
+      label: 'Rent during construction (not in total)',
+      calc: `₹${props.project.rentDuringConstruction.toLocaleString('en-IN')}/mo × ${r.monthsToHandover} months${r.rentEstimated ? ' (handover date not set — assuming 18)' : ' to handover'}${(props.project.rentEscalationPct || 0) > 0 ? ` · ${(props.project.rentEscalationPct * 100).toFixed(0)}% / yr` : ''}`,
+      amount: formatINR(r.rentOutlay),
+      kind: 'info',
+    })
+  }
+
+  return out
+})
+
+type TotalLine = { label: string, sub?: string, value: string, big?: boolean }
+const totalLines = computed<TotalLine[]>(() => {
+  const r = result.value
+  const lines: TotalLine[] = []
+  if (interiorsOn.value) {
+    lines.push({ label: 'MOVE-IN COST', sub: `All-inclusive + ${formatINR(props.project.interiorsBudget, { compact: true })} interiors`, value: formatINR(r.cashNeeded) })
+  }
+  if (rentOn.value && props.project.possessionStatus === 'underConstruction' && props.project.rentDuringConstruction > 0) {
+    lines.push({ label: 'TOTAL CASH IMPACT', sub: `Move-in cost + ${formatINR(r.rentOutlay, { compact: true })} rent`, value: formatINR(r.cashNeeded + r.rentOutlay) })
+  }
+  return lines
+})
+
+function labelClass(kind: InvoiceRow['kind']) {
+  return ''
+}
+
+function labelTextClass(kind: InvoiceRow['kind']) {
+  if (kind === 'gst') return 'text-xs text-muted'
+  if (kind === 'section' || kind === 'subtotal') return 'font-bold text-highlighted'
+  if (kind === 'discount') return 'font-medium text-success'
+  if (kind === 'info') return 'text-muted'
+  return ''
+}
+
+function amountClass(kind: InvoiceRow['kind']) {
+  if (kind === 'section' || kind === 'subtotal') return 'font-bold text-highlighted'
+  if (kind === 'discount') return 'font-medium text-success'
+  if (kind === 'gst' || kind === 'info') return 'text-xs text-muted'
+  return ''
+}
+
+function rowClass(kind: InvoiceRow['kind']) {
+  if (kind === 'section') return 'border-t-2 border-default bg-elevated/40'
+  if (kind === 'subtotal') return 'border-t-2 border-default'
+  return ''
+}
+
+const columns: TableColumn<InvoiceRow>[] = [
+  {
+    accessorKey: 'label',
+    header: 'Description',
+    meta: {
+      class: { th: 'w-2/5 text-xs font-medium uppercase tracking-widest text-muted font-mono', td: ({ row }: { row: { original: InvoiceRow } }) => `w-2/5 ${rowClass(row.original.kind)} ${labelClass(row.original.kind)}` },
+    },
+    cell: ({ row }) => row.original.arrow
+      ? h('span', { class: 'inline-flex items-center gap-1' }, [
+          h(resolveComponent('UIcon'), { name: 'i-ph-arrow-elbow-down-right', class: 'size-3 shrink-0 text-muted' }),
+          row.original.label,
+        ])
+      : h('span', { class: labelTextClass(row.original.kind) }, row.original.label),
+  },
+  {
+    accessorKey: 'calc',
+    header: 'Calculation',
+    meta: {
+      class: { th: 'w-2/5 text-left text-xs font-medium uppercase tracking-widest text-muted font-mono', td: ({ row }: { row: { original: InvoiceRow } }) => `w-2/5 ${rowClass(row.original.kind)} text-left text-xs text-muted tabular-num whitespace-normal wrap-break-word` },
+    },
+    cell: ({ row }) => h('span', row.original.calc ?? ''),
+  },
+  {
+    accessorKey: 'amount',
+    header: 'Amount',
+    meta: {
+      class: { th: 'w-1/5 text-right text-xs font-medium uppercase tracking-widest text-muted font-mono', td: ({ row }: { row: { original: InvoiceRow } }) => `w-1/5 ${rowClass(row.original.kind)} text-right whitespace-nowrap tabular-num text-sm ${amountClass(row.original.kind)}` },
+    },
+  },
+]
 </script>
 
 <template>
-  <UCard class="rounded-xl border-default">
-    <div class="text-muted">Total flat cost</div>
-    <div class="mt-1 text-3xl sm:text-4xl font-bold tabular-num tracking-tight">
-      {{ formatINR(animatedTotal) }}
-    </div>
-    <div class="mt-1 text-xs text-muted">
-      All-inclusive · ₹{{ result.perSqft.toLocaleString('en-IN', { maximumFractionDigits: 0 }) }} / sq.ft.
-    </div>
-
-    <USeparator class="my-4" />
-
-    <!-- base price rows -->
-    <div class="space-y-1.5 text-sm">
-      <div class="flex items-baseline justify-between gap-4">
-        <div>
-          <span class="font-medium">Base flat cost</span>
-          <span class="text-xs text-muted tabular-num"> ({{ project.areaSqft.toLocaleString('en-IN') }} × {{ formatINR(project.baseRatePerSqft) }})</span>
+  <UCard class="rounded-xl border-default ring ring-muted/40" :ui="{ body: 'p-0 sm:p-0' }">
+    <!-- Header -->
+    <div class="flex items-start justify-between gap-6 px-6 sm:px-10 pt-8 pb-6">
+      <div>
+        <div class="text-xl font-bold tracking-tight underline decoration-2 underline-offset-4">
+          FlatBuy
         </div>
-        <div class="tabular-num whitespace-nowrap">{{ formatINR(result.baseFlatCost) }}</div>
+        <div class="mt-1.5 text-[10px] font-mono tracking-[0.25em] text-muted uppercase">
+          Cost Calculator
+        </div>
       </div>
-      <div v-if="result.discount > 0" class="flex items-baseline justify-between gap-4 text-success">
-        <div class="font-medium">Builder discount ({{ (project.discountPct * 100).toFixed(1) }}%)</div>
-        <div class="tabular-num whitespace-nowrap">− {{ formatINR(result.discount) }}</div>
-      </div>
-      <div class="flex items-baseline justify-between gap-4">
-        <div class="font-semibold">Net flat cost</div>
-        <div class="tabular-num whitespace-nowrap font-semibold">{{ formatINR(result.netFlatCost) }}</div>
+      <div class="text-right">
+        <div class="flex items-center justify-end gap-2">
+          <span class="size-1.5 rounded-full bg-primary" />
+          <span class="text-3xl sm:text-4xl font-bold tracking-tight">Estimate</span>
+        </div>
+        <div class="mt-1 text-xs font-mono text-muted tabular-num">{{ docNo }}</div>
       </div>
     </div>
 
-    <USeparator class="my-4" />
+    <USeparator />
 
-    <!-- charge sections -->
-    <div class="space-y-1">
-      <details
-        v-for="cat in result.sections"
-        :key="cat.key"
-        class="group"
-        :open="cat.key === 'builder'"
-      >
-        <summary class="flex items-center justify-between cursor-pointer list-none py-2 rounded-md">
-          <span class="flex items-center gap-2 font-semibold">
-            <UIcon
-              :name="cat.key === 'builder' ? 'i-ph-wrench' : cat.key === 'government' ? 'i-ph-bank' : 'i-ph-key'"
-              class="size-4 text-muted"
-            />
-            {{ cat.label }}
-          </span>
-          <span class="flex items-center gap-2 tabular-num">
-            {{ formatINR(cat.subtotal) }}
-            <UIcon
-              name="i-ph-caret-down"
-              class="size-4 text-muted transition-transform duration-200 group-open:rotate-180"
-            />
-          </span>
-        </summary>
+    <!-- Meta grid -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-5 px-6 sm:px-10 py-6 text-sm">
+      <div class="col-span-2 sm:col-span-1">
+        <div class="text-[10px] font-mono tracking-[0.2em] text-muted uppercase">Prepared for</div>
+        <div class="mt-1.5 font-semibold leading-snug">{{ project.name }}</div>
+        <div class="mt-0.5 text-muted">
+          {{ project.areaSqft.toLocaleString('en-IN') }} sq.ft.<template v-if="project.floorNo">
+            · Floor {{ project.floorNo }}</template>
+        </div>
+        <div class="text-muted">{{ possessionLabel }}</div>
+      </div>
+      <div>
+        <div class="text-[10px] font-mono tracking-[0.2em] text-muted uppercase">Issue date</div>
+        <div class="mt-1.5 font-medium tabular-num">{{ today }}</div>
+        <div class="mt-3 text-[10px] font-mono tracking-[0.2em] text-muted uppercase">Currency</div>
+        <div class="mt-1 font-medium">INR</div>
+      </div>
+      <div>
+        <div class="text-[10px] font-mono tracking-[0.2em] text-muted uppercase">Rate / sq.ft.</div>
+        <div class="mt-1.5 font-medium tabular-num">{{ formatINR(project.baseRatePerSqft) }}</div>
+        <div class="mt-3 text-[10px] font-mono tracking-[0.2em] text-muted uppercase">All-inclusive / sq.ft.</div>
+        <div class="mt-1 font-medium tabular-num">₹{{ result.perSqft.toLocaleString('en-IN', { maximumFractionDigits: 0 }) }}</div>
+      </div>
+    </div>
 
-        <div class="pb-2 space-y-1">
-          <template v-for="ci in cat.items" :key="ci.item.id">
-            <template v-if="ci.item.id === 'base-gst'">
-              <!-- Sale consideration (5% GST base) -->
-              <div class="flex items-baseline justify-between gap-4 text-sm pt-1">
-                <div>
-                  <span class="font-semibold">Sale consideration (flat + charges)</span>
-                  <div class="text-xs text-muted mt-0.5">{{ result.saleFormula }}</div>
-                </div>
-                <span class="tabular-num whitespace-nowrap font-semibold">{{ formatINR(result.saleConsideration) }}</span>
-              </div>
-              <!-- GST applied on it -->
-              <div class="flex items-baseline justify-between gap-4 text-sm ps-5">
-                <div class="text-xs text-muted">
-                  <span class="mr-1">↳</span>
-                  <span class="font-medium">GST on flat cost</span>
-                  <span class="tabular-num"> ({{ ci.calculation }})</span>
-                </div>
-                <span class="tabular-num whitespace-nowrap">{{ formatINR(ci.amount) }}</span>
-              </div>
-            </template>
-            <ChargeRow
-              v-else-if="ci.item.id !== 'tds'"
-              :item="ci"
-              :project="project"
-            />
-          </template>
-          <USeparator />
-          <div class="flex justify-between text-sm text-muted">
-            <span>{{ cat.label }} subtotal</span>
-            <span class="tabular-num">{{ formatINR(cat.subtotal) }}</span>
+    <!-- Line items -->
+    <div class="border-y border-default mx-6 sm:mx-10">
+      <UTable
+        :data="rows"
+        :columns="columns"
+        class="[&_table]:table-fixed [&_table]:w-full"
+        :ui="{
+          root: 'overflow-visible',
+          thead: '[&>tr>th]:py-2.5',
+          tbody: 'divide-y divide-default/60',
+          tr: 'hover:bg-transparent',
+          td: 'py-2.5 px-2 sm:px-3 align-baseline first:ps-0 last:pe-0',
+        }"
+      />
+    </div>
+
+    <!-- Totals block -->
+    <div class="px-6 sm:px-10 py-6">
+      <div class="ms-auto max-w-xs space-y-4">
+        <div>
+          <div class="flex items-baseline justify-between gap-4 text-sm">
+            <span class="text-[10px] font-mono tracking-[0.2em] text-muted uppercase">Subtotal</span>
+            <span class="tabular-num font-semibold">{{ formatINR(result.grandTotal) }}</span>
+          </div>
+          <div class="mt-1.5 border-t-2 border-default" />
+          <div class="flex items-baseline justify-between gap-4 pt-3">
+            <span class="text-[10px] font-mono tracking-[0.2em] text-muted uppercase">Total</span>
+            <span class="text-2xl font-bold tabular-num text-primary">{{ formatINR(animatedTotal) }}</span>
           </div>
         </div>
-      </details>
-    </div>
-
-    <USeparator class="my-3" />
-    <div class="flex items-baseline justify-between gap-4">
-      <div>
-        <div class="text-lg font-bold">All-inclusive price</div>
-        <div class="text-xs text-muted mt-0.5">Flat + builder + government + possession</div>
-      </div>
-      <div class="text-2xl font-bold tabular-num text-right">
-        {{ formatINR(result.grandTotal) }}
-      </div>
-    </div>
-
-    <!-- "Not in total" info lines (after All-inclusive, before Move-in) -->
-    <div class="mt-3 space-y-2 text-sm text-muted">
-      <div class="flex items-baseline justify-between gap-4">
-        <div>
-          <span class="font-medium">TDS 1% (not in total)</span>
-          <div class="text-xs mt-0.5">Deducted from builder payment · deposit via Form 26QB</div>
-        </div>
-        <div class="tabular-num whitespace-nowrap">{{ formatINR(result.tds) }}</div>
-      </div>
-
-      <div v-if="interiorsOn" class="flex items-baseline justify-between gap-4">
-        <div>
-          <span class="font-medium">Interiors / move-in (not in total)</span>
-          <div class="text-xs mt-0.5">Own spending, outside the builder quote</div>
-        </div>
-        <div class="tabular-num whitespace-nowrap">{{ formatINR(project.interiorsBudget) }}</div>
-      </div>
-    </div>
-
-    <!-- move-in cost (All-inclusive + interiors, no rent) -->
-    <div v-if="interiorsOn" class="flex items-baseline justify-between gap-4 mt-3">
-      <div>
-        <span class="font-semibold">Move-in cost</span>
-        <div class="text-xs text-muted mt-0.5">
-          All-inclusive + {{ formatINR(project.interiorsBudget, { compact: true }) }} interiors
+        <div v-for="line in totalLines" :key="line.label">
+          <div class="border-t border-dashed border-default pt-3 flex items-baseline justify-between gap-4">
+            <div>
+              <div class="text-[10px] font-mono tracking-[0.2em] text-muted uppercase">{{ line.label }}</div>
+              <div v-if="line.sub" class="text-xs text-muted mt-0.5">{{ line.sub }}</div>
+            </div>
+            <span class="text-lg font-bold tabular-num">{{ line.value }}</span>
+          </div>
         </div>
       </div>
-      <div class="text-lg font-bold tabular-num text-right">
-        {{ formatINR(result.cashNeeded) }}
-      </div>
     </div>
 
-    <!-- Rent during construction separate (after Move-in, before Total cash impact) -->
-    <div
-      v-if="rentOn && project.possessionStatus === 'underConstruction' && project.rentDuringConstruction > 0"
-      class="flex items-baseline justify-between gap-4 text-sm text-muted mt-3"
-    >
-      <div>
-        <span class="font-medium">Rent during construction (not in total)</span>
-        <div class="text-xs mt-0.5">
-          ₹{{ project.rentDuringConstruction.toLocaleString('en-IN') }}/mo × {{ result.monthsToHandover }} months{{ result.rentEstimated ? ' (handover date not set — assuming 18)' : ' to handover' }}{{ (project.rentEscalationPct || 0) > 0 ? ` · ${(project.rentEscalationPct * 100).toFixed(0)}% / yr` : '' }}
+    <!-- Loan note -->
+    <div v-if="project.loan.enabled" class="px-6 sm:px-10 pb-6">
+      <div class="rounded-lg bg-elevated/50 p-3 text-sm">
+        <div class="flex items-center justify-between">
+          <span class="font-medium flex items-center gap-1.5"><UIcon name="i-ph-bank" class="size-4 text-muted" /> Loan</span>
+          <span class="tabular-num">{{ formatINR(project.loan.loanAmount) }} @ {{ project.loan.interestRate }}% × {{ project.loan.tenureYears }}y</span>
         </div>
-      </div>
-      <div class="tabular-num whitespace-nowrap">{{ formatINR(result.rentOutlay) }}</div>
-    </div>
-
-    <!-- total cash impact (includes rent outlay) -->
-    <div
-      v-if="rentOn && project.possessionStatus === 'underConstruction' && project.rentDuringConstruction > 0"
-      class="flex items-baseline justify-between gap-4 mt-2"
-    >
-      <div>
-        <span class="font-semibold">Total cash impact</span>
-        <div class="text-xs text-muted mt-0.5">
-          Move-in cost + {{ formatINR(result.rentOutlay, { compact: true }) }} rent during construction
-        </div>
-      </div>
-      <div class="text-lg font-bold tabular-num text-right">
-        {{ formatINR(result.cashNeeded + result.rentOutlay) }}
+        <div class="text-xs text-muted mt-1">EMI & interest computation coming soon — inputs are saved</div>
       </div>
     </div>
 
-    <!-- loan strip -->
-    <div v-if="project.loan.enabled" class="mt-4 rounded-lg bg-elevated/50 p-3 text-sm">
-      <div class="flex items-center justify-between">
-        <span class="font-medium flex items-center gap-1.5"><UIcon name="i-ph-bank" class="size-4 text-muted" /> Loan</span>
-        <span class="tabular-num">{{ formatINR(project.loan.loanAmount) }} @ {{ project.loan.interestRate }}% × {{ project.loan.tenureYears }}y</span>
+    <!-- Footer -->
+    <div class="border-t border-default px-6 sm:px-10 py-4">
+      <div class="flex items-center justify-between gap-4 text-[10px] font-mono tracking-[0.15em] text-muted uppercase">
+        <span>FlatBuy Cost Calculator</span>
+        <span class="hidden sm:inline tabular-num">Doc {{ docNo }} · Issued {{ today }}</span>
       </div>
-      <div class="text-xs text-muted mt-1">EMI & interest computation coming soon — inputs are saved</div>
     </div>
   </UCard>
 </template>

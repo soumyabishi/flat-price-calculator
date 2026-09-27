@@ -15,8 +15,7 @@ export default defineNuxtConfig({
   },
   fonts: {
     families: [
-      { name: 'Figtree', provider: 'google' },
-      { name: 'Google Sans Code', provider: 'google' }
+      { name: 'Figtree', provider: 'google' }
     ]
   },
   css: ['~/assets/css/main.css']

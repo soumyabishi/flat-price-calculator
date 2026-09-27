@@ -233,10 +233,8 @@ function onExport() {
         </template>
       </UModal>
 
-      <div class="grid gap-8 lg:grid-cols-[1fr_30rem] xl:grid-cols-[1fr_32rem]">
-        <!-- LEFT: inputs in tabs -->
-        <div>
-          <UTabs
+      <div class="max-w-3xl mx-auto">
+        <UTabs
             v-model="activeTab"
             :items="tabItems"
             variant="pill"
@@ -546,10 +544,10 @@ function onExport() {
           </UTabs>
         </div>
 
-        <!-- RIGHT: summary -->
-        <div class="lg:sticky lg:top-8 self-start w-full">
-          <SummaryCard :project="active" />
-        </div>
+      <!-- BELOW: invoice-style summary -->
+      <USeparator class="mt-10 mb-8" />
+      <div class="max-w-[210mm] mx-auto pb-16">
+        <SummaryCard :project="active" />
       </div>
     </UContainer>
   </div>
