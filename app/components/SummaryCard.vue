@@ -39,7 +39,10 @@ const interiorsOn = computed(() => props.project.interiorsOn)
 const rentOn = computed(() => props.project.rentOn)
 
 const docNo = computed(() => `EST-${props.project.id.replace(/[^a-zA-Z0-9]/g, '').slice(0, 4).toUpperCase() || '0001'}`)
-const today = computed(() => new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }))
+const today = ref('')
+onMounted(() => {
+  today.value = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+})
 const possessionLabel = computed(() => props.project.possessionStatus === 'underConstruction' ? 'Under construction' : 'Ready to move')
 
 type InvoiceRow = {
@@ -49,6 +52,7 @@ type InvoiceRow = {
   amount: string
   kind: 'item' | 'gst' | 'subtotal' | 'section' | 'info' | 'discount'
   arrow?: boolean
+  icon?: string
 }
 
 const rows = computed<InvoiceRow[]>(() => {
@@ -62,11 +66,15 @@ const rows = computed<InvoiceRow[]>(() => {
   out.push({ id: 'net', label: 'Net flat cost', amount: formatINR(r.netFlatCost), kind: 'subtotal' })
 
   for (const cat of r.sections) {
-    out.push({ id: `sec-${cat.key}`, label: cat.label, amount: formatINR(cat.subtotal), kind: 'section' })
+    const icon = cat.key === 'builder' ? 'i-ph-wrench' : cat.key === 'government' ? 'i-ph-bank' : 'i-ph-key'
+    out.push({ id: `sec-${cat.key}`, label: cat.label.toUpperCase(), amount: '', kind: 'section', icon })
+    let gstRows: InvoiceRow[] = []
     for (const ci of cat.items) {
       if (ci.item.id === 'base-gst') {
-        out.push({ id: 'sale', label: 'Sale consideration', calc: r.saleFormula, amount: formatINR(r.saleConsideration), kind: 'subtotal' })
-        out.push({ id: 'base-gst', label: 'GST on flat cost', calc: ci.calculation, amount: formatINR(ci.amount), kind: 'gst' })
+        gstRows = [
+          { id: 'sale', label: 'Sale consideration', calc: r.saleFormula, amount: formatINR(r.saleConsideration), kind: 'subtotal' },
+          { id: 'base-gst', label: 'GST on flat cost', calc: ci.calculation, amount: formatINR(ci.amount), kind: 'gst' },
+        ]
         continue
       }
       if (ci.item.id === 'tds') continue
@@ -89,6 +97,7 @@ const rows = computed<InvoiceRow[]>(() => {
       }
     }
     out.push({ id: `sub-${cat.key}`, label: `${cat.label} subtotal`, amount: formatINR(cat.subtotal), kind: 'subtotal' })
+    out.push(...gstRows)
   }
 
   out.push({ id: 'tds', label: 'TDS 1% (not in total)', calc: 'Deducted from builder payment · Form 26QB', amount: formatINR(r.tds), kind: 'info' })
@@ -127,22 +136,23 @@ function labelClass(kind: InvoiceRow['kind']) {
 
 function labelTextClass(kind: InvoiceRow['kind']) {
   if (kind === 'gst') return 'text-xs text-muted'
-  if (kind === 'section' || kind === 'subtotal') return 'font-bold text-highlighted'
+  if (kind === 'section') return 'text-xs font-medium uppercase tracking-widest text-muted'
+  if (kind === 'subtotal') return 'text-highlighted'
   if (kind === 'discount') return 'font-medium text-success'
   if (kind === 'info') return 'text-muted'
   return ''
 }
 
 function amountClass(kind: InvoiceRow['kind']) {
-  if (kind === 'section' || kind === 'subtotal') return 'font-bold text-highlighted'
+  if (kind === 'subtotal') return 'text-highlighted'
   if (kind === 'discount') return 'font-medium text-success'
   if (kind === 'gst' || kind === 'info') return 'text-xs text-muted'
   return ''
 }
 
 function rowClass(kind: InvoiceRow['kind']) {
-  if (kind === 'section') return 'border-t-2 border-default bg-elevated/40'
-  if (kind === 'subtotal') return 'border-t-2 border-default'
+  if (kind === 'section') return 'border-t-3 border-default bg-muted'
+  if (kind === 'subtotal') return 'border-t-3 border-default'
   return ''
 }
 
@@ -151,14 +161,17 @@ const columns: TableColumn<InvoiceRow>[] = [
     accessorKey: 'label',
     header: 'Description',
     meta: {
-      class: { th: 'w-2/5 text-xs font-medium uppercase tracking-widest text-muted font-mono', td: ({ row }: { row: { original: InvoiceRow } }) => `w-2/5 ${rowClass(row.original.kind)} ${labelClass(row.original.kind)}` },
+      class: { th: 'w-2/5 text-xs font-medium uppercase tracking-widest text-muted font-mono', td: ({ row }: { row: { original: InvoiceRow } }) => `w-2/5 ${rowClass(row.original.kind)} ${labelClass(row.original.kind)} whitespace-normal wrap-break-word` },
     },
-    cell: ({ row }) => row.original.arrow
-      ? h('span', { class: 'inline-flex items-center gap-1' }, [
+    cell: ({ row }) => {
+      if (row.original.arrow) {
+        return h('span', { class: 'inline-flex items-center gap-1 whitespace-normal wrap-break-word' }, [
           h(resolveComponent('UIcon'), { name: 'i-ph-arrow-elbow-down-right', class: 'size-3 shrink-0 text-muted' }),
           row.original.label,
         ])
-      : h('span', { class: labelTextClass(row.original.kind) }, row.original.label),
+      }
+      return h('span', { class: labelTextClass(row.original.kind) }, row.original.label)
+    },
   },
   {
     accessorKey: 'calc',
@@ -232,7 +245,7 @@ const columns: TableColumn<InvoiceRow>[] = [
         class="[&_table]:table-fixed [&_table]:w-full"
         :ui="{
           root: 'overflow-visible',
-          thead: '[&>tr>th]:py-2.5 [&>tr>th]:px-2 sm:[&>tr>th]:px-3',
+          thead: '[&>tr>th]:py-2.5 [&>tr>th]:px-2 sm:[&>tr>th]:px-3 [&>tr>th]:bg-muted',
           tbody: 'divide-y divide-default/60',
           tr: 'hover:bg-transparent',
           td: 'py-2.5 px-2 sm:px-3 align-baseline',

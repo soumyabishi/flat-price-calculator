@@ -66,6 +66,7 @@ export function computeRentOutlay(project: Project): { months: number, outlay: n
   if (project.possessionStatus !== 'underConstruction') return { months: 0, outlay: 0, estimated: false }
   if (!project.rentOn) return { months: 0, outlay: 0, estimated: false }
   if (!project.rentDuringConstruction) return { months: 0, outlay: 0, estimated: false }
+  if (import.meta.server) return { months: 0, outlay: 0, estimated: false }
 
   let months = 0
   let estimated = false
