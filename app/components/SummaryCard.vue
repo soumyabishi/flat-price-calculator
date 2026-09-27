@@ -192,7 +192,7 @@ const columns: TableColumn<InvoiceRow>[] = [
 </script>
 
 <template>
-  <UCard class="rounded-xl border-default shadow-lg shadow-black/10 dark:shadow-black/40 ring ring-muted/40" :ui="{ body: 'p-0 sm:p-0' }">
+  <UCard class="bg-elevated/50 rounded-xl border-default shadow-lg shadow-black/10 dark:shadow-black/40 ring ring-muted/40" :ui="{ body: 'p-0 sm:p-0' }">
     <!-- Header -->
     <div class="flex items-start justify-between gap-6 px-6 sm:px-10 pt-8 pb-6">
       <div>
@@ -237,8 +237,24 @@ const columns: TableColumn<InvoiceRow>[] = [
       </div>
     </div>
 
+    <!-- Totals block (moved to top, right under meta) -->
+    <div class="px-6 sm:px-10 py-6 border-b border-default">
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-4">
+        <div>
+          <div class="text-[10px] font-mono tracking-[0.2em] text-muted uppercase">All-inclusive</div>
+          <div class="mt-1 text-2xl font-bold tabular-num text-primary">{{ formatINR(animatedTotal) }}</div>
+          <div class="text-xs text-muted mt-0.5">Flat + builder + govt + possession</div>
+        </div>
+        <div v-for="line in totalLines" :key="line.label">
+          <div class="text-[10px] font-mono tracking-[0.2em] text-muted uppercase">{{ line.label }}</div>
+          <div class="mt-1 text-2xl font-bold tabular-num">{{ line.value }}</div>
+          <div v-if="line.sub" class="text-xs text-muted mt-0.5">{{ line.sub }}</div>
+        </div>
+      </div>
+    </div>
+
     <!-- Line items -->
-    <div class="border-y border-default mx-6 sm:mx-10">
+    <div class="mx-6 sm:mx-10 mt-6">
       <UTable
         :data="rows"
         :columns="columns"
@@ -253,34 +269,8 @@ const columns: TableColumn<InvoiceRow>[] = [
       />
     </div>
 
-    <!-- Totals block -->
-    <div class="px-6 sm:px-10 py-6">
-      <div class="ms-auto max-w-xs space-y-4">
-        <div>
-          <div class="flex items-baseline justify-between gap-4 text-sm">
-            <span class="text-[10px] font-mono tracking-[0.2em] text-muted uppercase">Subtotal</span>
-            <span class="tabular-num font-semibold">{{ formatINR(result.grandTotal) }}</span>
-          </div>
-          <div class="mt-1.5 border-t-2 border-default" />
-          <div class="flex items-baseline justify-between gap-4 pt-3">
-            <span class="text-[10px] font-mono tracking-[0.2em] text-muted uppercase">Total</span>
-            <span class="text-2xl font-bold tabular-num text-primary">{{ formatINR(animatedTotal) }}</span>
-          </div>
-        </div>
-        <div v-for="line in totalLines" :key="line.label">
-          <div class="border-t border-dashed border-default pt-3 flex items-baseline justify-between gap-4">
-            <div>
-              <div class="text-[10px] font-mono tracking-[0.2em] text-muted uppercase">{{ line.label }}</div>
-              <div v-if="line.sub" class="text-xs text-muted mt-0.5">{{ line.sub }}</div>
-            </div>
-            <span class="text-lg font-bold tabular-num">{{ line.value }}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- Loan note -->
-    <div v-if="project.loan.enabled" class="px-6 sm:px-10 pb-6">
+    <div v-if="project.loan.enabled" class="px-6 sm:px-10 py-6">
       <div class="rounded-lg bg-elevated/50 p-3 text-sm">
         <div class="flex items-center justify-between">
           <span class="font-medium flex items-center gap-1.5"><UIcon name="i-ph-bank" class="size-4 text-muted" /> Loan</span>

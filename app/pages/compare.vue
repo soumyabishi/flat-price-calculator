@@ -100,9 +100,11 @@ function itemTotal(projectId: string, sectionKey: string, itemId: string) {
               </td>
             </tr>
             <tr class="border-b border-default">
-              <td class="py-2 text-muted">All-inclusive / sq.ft.</td>
-              <td v-for="p in projects" :key="p.id" class="py-2 text-right px-4 tabular-num text-muted">
-                ₹{{ (res(p.id)?.perSqft ?? 0).toLocaleString('en-IN', { maximumFractionDigits: 0 }) }}
+              <td class="py-2 text-muted">Rate / sq.ft. → All-inclusive / sq.ft.</td>
+              <td v-for="p in projects" :key="p.id" class="py-2 text-right px-4">
+                <span class="tabular-num">₹{{ (p.baseRatePerSqft ?? 0).toLocaleString('en-IN', { maximumFractionDigits: 0 }) }}</span>
+                <span class="text-muted mx-1">→</span>
+                <span class="tabular-num text-muted">₹{{ (res(p.id)?.perSqft ?? 0).toLocaleString('en-IN', { maximumFractionDigits: 0 }) }}</span>
               </td>
             </tr>
             <tr class="border-b border-default">

@@ -151,7 +151,7 @@ function onDragStart(e: PointerEvent) {
 
 <template>
   <div class="h-screen flex flex-col bg-default text-default overflow-hidden">
-    <UContainer class="shrink-0 py-2.5 w-full">
+    <UContainer class="shrink-0 py-2.5 w-full  border-b border-b-default">
       <header>
         <div class="flex items-center gap-3">
           <div class="flex items-center gap-2.5 shrink-0">
@@ -371,7 +371,7 @@ function onDragStart(e: PointerEvent) {
             </div>
 
             <div v-if="activeTab === 'builder'">
-              <div class="pt-4">
+              <div >
                 <ChargeSection
                   :project="active"
                   title="Builder / project charges"
@@ -393,7 +393,7 @@ function onDragStart(e: PointerEvent) {
             </div>
 
             <div v-if="activeTab === 'possession'">
-              <div class="pt-4">
+              <div>
                 <ChargeSection
                   :project="active"
                   title="Possession / initial charges"
@@ -404,7 +404,7 @@ function onDragStart(e: PointerEvent) {
             </div>
 
             <div v-if="activeTab === 'loan'">
-              <div class="pt-4">
+              <div >
                 <section class="rounded-lg border border-default p-4">
                   <div class="flex items-center gap-2 mb-4">
                     <USwitch v-model="active.loan.enabled" size="xs" />
@@ -483,7 +483,7 @@ function onDragStart(e: PointerEvent) {
             </div>
 
             <div v-if="activeTab === 'interiors'">
-              <div class="pt-4">
+              <div >
                 <section class="rounded-lg border border-default p-4">
                   <div class="flex items-center gap-2 mb-4">
                     <USwitch v-model="active.interiorsOn" size="xs" />
@@ -511,7 +511,7 @@ function onDragStart(e: PointerEvent) {
             </div>
 
             <div v-if="activeTab === 'rent'">
-              <div class="pt-4">
+              <div >
                 <section class="rounded-lg border border-default p-4">
                   <div class="flex items-center gap-2 mb-4">
                     <USwitch v-model="active.rentOn" size="xs" />
@@ -585,14 +585,14 @@ function onDragStart(e: PointerEvent) {
 
       <!-- Drag handle -->
       <div
-        class="relative w-px shrink-0 cursor-col-resize bg-default"
+        class="relative w-px shrink-0 cursor-col-resize bg-default border-r border-accented/60"
         @pointerdown="onDragStart"
       >
         <!-- wide hit area + hover rail -->
         <div class="absolute inset-y-0 -inset-x-2.5 z-10 flex items-center justify-center group cursor-col-resize">
           <div
-            class="h-16 w-6 rounded-full flex items-center justify-center transition-colors duration-150"
-            :class="dragging ? 'bg-primary/80' : 'bg-accented/30'"
+            class="h-12 w-3 rounded-full flex items-center justify-center transition-colors duration-150"
+            :class="dragging ? 'bg-primary' : 'bg-accented'"
           >
             <UIcon
               name="i-lucide-grip-vertical"
@@ -603,7 +603,7 @@ function onDragStart(e: PointerEvent) {
         </div>
       </div>
 
-      <section class="h-full overflow-y-auto px-4 sm:px-6 py-6 flex-1 min-w-0 bg-elevated/30">
+      <section class="h-full overflow-y-auto px-4 sm:px-6 py-6 flex-1 min-w-0 bg-black/20">
         <div class="max-w-[210mm] mx-auto">
           <SummaryCard :project="active" />
         </div>
