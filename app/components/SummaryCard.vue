@@ -212,21 +212,12 @@ const columns: TableColumn<InvoiceRow>[] = [
 <template>
   <UCard class="bg-elevated/50 rounded-xl border-default shadow-lg shadow-black/10 dark:shadow-black/40 ring ring-muted/40" :ui="{ body: 'p-0 sm:p-0' }">
     <!-- Header -->
-    <div class="flex items-start justify-between gap-6 px-6 sm:px-10 pt-8 pb-6">
-      <div>
-        <div class="text-xl font-bold tracking-tight underline decoration-2 underline-offset-4">
-          FlatBuy
-        </div>
-        <div class="mt-1.5 text-[10px] font-mono tracking-[0.25em] text-muted uppercase">
-          Cost Calculator
-        </div>
+    <div class="flex items-baseline gap-2.5 px-6 sm:px-10 pt-6 pb-4">
+      <div class="text-lg font-bold tracking-tight underline decoration-2 underline-offset-4">
+        FlatBuy
       </div>
-      <div class="text-right">
-        <div class="flex items-center justify-end gap-2">
-          <span class="size-1.5 rounded-full bg-primary" />
-          <span class="text-3xl sm:text-4xl font-bold tracking-tight">Estimate</span>
-        </div>
-        <div class="mt-1 text-xs font-mono text-muted tabular-num">{{ docNo }}</div>
+      <div class="text-[10px] font-mono tracking-[0.25em] text-muted uppercase">
+        Cost Calculator
       </div>
     </div>
 
