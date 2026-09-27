@@ -35,6 +35,19 @@ onMounted(() => {
   animatedTotal.value = result.value.grandTotal
 })
 
+/**
+ * The grand total counts up over 500ms. Printing mid-animation would put a
+ * wrong number on a document people rely on, so snap to the final value
+ * before the print snapshot is taken. Also covers Cmd/Ctrl+P.
+ */
+function onBeforePrint() {
+  cancelAnimationFrame(rafId)
+  animatedTotal.value = result.value.grandTotal
+}
+
+onMounted(() => window.addEventListener('beforeprint', onBeforePrint))
+onBeforeUnmount(() => window.removeEventListener('beforeprint', onBeforePrint))
+
 const interiorsOn = computed(() => props.project.interiorsOn)
 const rentOn = computed(() => props.project.rentOn)
 
@@ -210,7 +223,7 @@ const columns: TableColumn<InvoiceRow>[] = [
 </script>
 
 <template>
-  <UCard class="bg-elevated/50 rounded-xl border-default shadow-lg shadow-black/10 dark:shadow-black/40 ring ring-muted/40" :ui="{ body: 'p-0 sm:p-0' }">
+  <UCard class="print-doc bg-elevated/50 rounded-xl border-default shadow-lg shadow-black/10 dark:shadow-black/40 ring ring-muted/40" :ui="{ body: 'p-0 sm:p-0' }">
     <!-- Header -->
     <div class="flex items-baseline gap-2.5 px-6 sm:px-10 pt-6 pb-4">
       <div class="text-lg font-bold tracking-tight underline decoration-2 underline-offset-4">
@@ -224,7 +237,7 @@ const columns: TableColumn<InvoiceRow>[] = [
     <USeparator />
 
     <!-- Meta grid -->
-    <div class="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-5 px-6 sm:px-10 py-6 text-sm">
+    <div class="print-keep grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-5 px-6 sm:px-10 py-6 text-sm">
       <div class="col-span-2 sm:col-span-1">
         <div class="text-[10px] font-mono tracking-[0.2em] text-muted uppercase">Prepared for</div>
         <div class="mt-1.5 font-semibold leading-snug">{{ project.name }}</div>
@@ -246,7 +259,7 @@ const columns: TableColumn<InvoiceRow>[] = [
     </div>
 
     <!-- Totals block (moved to top, right under meta) -->
-    <div class="px-6 sm:px-10 py-6 border-b border-default space-y-5">
+    <div class="print-keep px-6 sm:px-10 py-6 border-b border-default space-y-5">
       <!-- All-inclusive group -->
       <div class="rounded-lg border border-default p-4">
         <div class="text-[10px] font-mono tracking-[0.2em] text-muted uppercase">All-inclusive</div>
@@ -293,7 +306,7 @@ const columns: TableColumn<InvoiceRow>[] = [
     </div>
 
     <!-- Loan note -->
-    <div v-if="project.loan.enabled" class="px-6 sm:px-10 py-6">
+    <div v-if="project.loan.enabled" class="print-keep px-6 sm:px-10 py-6">
       <div class="rounded-lg bg-elevated/50 p-3 text-sm">
         <div class="flex items-center justify-between">
           <span class="font-medium flex items-center gap-1.5"><UIcon name="i-ph-bank" class="size-4 text-muted" /> Loan</span>

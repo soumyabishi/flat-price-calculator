@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { NavigationMenuItem } from '@nuxt/ui'
 import { formatINR } from '~/composables/computeProject'
+import { usePrintSummary } from '~/composables/usePrintSummary'
 import type { ChargeItem } from '~/composables/useProjectConfig'
 
 const {
@@ -97,11 +98,15 @@ const stepItems = computed(() => {
 })
 
 const deleteTarget = ref<{ id: string, name: string } | undefined>()
+
+const { printSummary } = usePrintSummary()
+
 function confirmDelete() {
   if (!deleteTarget.value) return
   removeProject(deleteTarget.value.id)
   deleteTarget.value = undefined
 }
+
 function onImport(e: Event) {
   const target = e.target as HTMLInputElement
   const file = target.files?.[0]
@@ -154,10 +159,10 @@ function onDragStart(e: PointerEvent) {
 </script>
 
 <template>
-  <div class="h-screen flex flex-col bg-default text-default overflow-hidden">
+  <div class="h-screen flex flex-col bg-default text-default overflow-hidden print-root">
     <UContainer class="shrink-0 py-2.5 w-full  border-b border-b-default">
       <header>
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3 print:hidden">
           <div class="flex items-center gap-2.5 shrink-0">
             <UIcon name="i-ph-buildings-fill" class="size-5 text-primary shrink-0" />
             <span class="text-lg font-bold tracking-tight">FlatBuy</span>
@@ -222,6 +227,7 @@ function onDragStart(e: PointerEvent) {
                 { label: 'Duplicate current', icon: 'i-ph-copy', onSelect: () => duplicateProject(active.id) },
                 { label: 'Export JSON', icon: 'i-ph-download-simple', onSelect: () => onExport() },
                 { label: 'Import JSON', icon: 'i-ph-upload-simple', onSelect: () => fileInput?.click() },
+                { label: 'Download PDF', icon: 'i-ph-printer', onSelect: () => printSummary(active) },
                 { label: 'Delete current', icon: 'i-ph-trash', color: 'error' as const, onSelect: () => removeProject(active.id) },
               ]]"
             >
@@ -263,8 +269,8 @@ function onDragStart(e: PointerEvent) {
     </UModal>
 
     <!-- Custom split: inputs left, summary right; draggable divider, each panel scrolls independently -->
-    <div class="flex-1 min-h-0 w-full flex">
-      <section class="h-full px-4 sm:px-6 py-6 flex gap-6" :style="{ width: leftWidth + '%' }">
+    <div class="flex-1 min-h-0 w-full flex print-split">
+      <section class="h-full px-4 sm:px-6 py-6 flex gap-6 print:hidden" :style="{ width: leftWidth + '%' }">
         <!-- Left panel: sticky nav -->
         <div class="h-full shrink-0">
           <div class="sticky top-0">
@@ -632,7 +638,7 @@ function onDragStart(e: PointerEvent) {
         </div>
       </div>
 
-      <section class="h-full overflow-y-auto px-4 sm:px-6 py-6 flex-1 min-w-0 bg-black/20">
+      <section class="h-full overflow-y-auto px-4 sm:px-6 py-6 flex-1 min-w-0 bg-black/20 print-pane">
         <div class="max-w-[210mm] mx-auto">
           <SummaryCard :project="active" />
         </div>

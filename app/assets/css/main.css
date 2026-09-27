@@ -31,3 +31,99 @@
   --ui-bg-muted: var(--ui-color-neutral-800);
   --ui-text-inverted: var(--ui-color-neutral-900);
 }
+
+@page {
+  size: A4;
+  margin: 14mm 12mm;
+}
+
+@media print {
+  /* The app is dark-mode capable, but an estimate has to be legible on paper.
+     `html.dark` outranks Nuxt UI's own `.dark` block on specificity, so these
+     light values win regardless of the reader's colour-mode setting. */
+  html,
+  html.dark,
+  html.light {
+    color-scheme: light;
+    --ui-primary: black;
+    --ui-text-dimmed: var(--ui-color-neutral-400);
+    --ui-text-muted: var(--ui-color-neutral-500);
+    --ui-text-toned: var(--ui-color-neutral-600);
+    --ui-text: var(--ui-color-neutral-700);
+    --ui-text-highlighted: var(--ui-color-neutral-900);
+    --ui-text-inverted: var(--ui-color-neutral-50);
+    --ui-bg: var(--ui-color-neutral-50);
+    --ui-bg-muted: var(--ui-color-neutral-100);
+    --ui-bg-elevated: var(--ui-color-neutral-100);
+    --ui-bg-accented: var(--ui-color-neutral-200);
+    --ui-bg-inverted: var(--ui-color-neutral-900);
+    --ui-border: var(--ui-color-neutral-200);
+    --ui-border-muted: var(--ui-color-neutral-200);
+    --ui-border-accented: var(--ui-color-neutral-300);
+    --ui-border-inverted: var(--ui-color-neutral-900);
+  }
+
+  html,
+  body {
+    height: auto;
+    overflow: visible;
+    background: #fff;
+  }
+
+  /* The app is a viewport-height shell with independently scrolling panels.
+     Both of those clip, and a clipped box never paginates, so flatten the
+     whole chain back to normal flow for print. */
+  .print-root,
+  .print-split,
+  .print-pane {
+    display: block !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+
+  .print-pane {
+    padding: 0 !important;
+    background: #fff !important;
+  }
+
+  /* The card's own decorative frame has no meaning on paper. */
+  .print-doc {
+    border: 0 !important;
+    box-shadow: none !important;
+    --tw-ring-shadow: 0 0 0 0 transparent !important;
+  }
+
+  /* A figure must never be separated from its label. */
+  .print-keep {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Repeat the column headings on continuation sheets, and never split a
+     line item across a page boundary. */
+  .print-doc table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .print-doc thead {
+    display: table-header-group;
+  }
+
+  .print-doc tfoot {
+    display: table-footer-group;
+  }
+
+  .print-doc tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .print-doc h1,
+  .print-doc h2,
+  .print-doc h3 {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+}
