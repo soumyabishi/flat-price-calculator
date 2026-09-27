@@ -215,8 +215,6 @@ const columns: TableColumn<InvoiceRow>[] = [
       <div>
         <div class="text-[10px] font-mono tracking-[0.2em] text-muted uppercase">Issue date</div>
         <div class="mt-1.5 font-medium tabular-num">{{ today }}</div>
-        <div class="mt-3 text-[10px] font-mono tracking-[0.2em] text-muted uppercase">Currency</div>
-        <div class="mt-1 font-medium">INR</div>
       </div>
       <div>
         <div class="text-[10px] font-mono tracking-[0.2em] text-muted uppercase">Rate / sq.ft.</div>
@@ -234,10 +232,10 @@ const columns: TableColumn<InvoiceRow>[] = [
         class="[&_table]:table-fixed [&_table]:w-full"
         :ui="{
           root: 'overflow-visible',
-          thead: '[&>tr>th]:py-2.5',
+          thead: '[&>tr>th]:py-2.5 [&>tr>th]:px-2 sm:[&>tr>th]:px-3',
           tbody: 'divide-y divide-default/60',
           tr: 'hover:bg-transparent',
-          td: 'py-2.5 px-2 sm:px-3 align-baseline first:ps-0 last:pe-0',
+          td: 'py-2.5 px-2 sm:px-3 align-baseline',
         }"
       />
     </div>
