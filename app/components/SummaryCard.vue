@@ -315,8 +315,11 @@ const columns: TableColumn<InvoiceRow>[] = [
 
     <USeparator />
 
-    <!-- Meta grid -->
-    <div class="print-keep grid grid-cols-2 lg:grid-cols-3 gap-x-4 sm:gap-x-6 gap-y-5 px-4 sm:px-6 lg:px-10 py-5 sm:py-6 text-sm">
+    <!-- Meta grid. The bottom padding here and the totals block's top padding
+         together form the gap to the All-inclusive row; the block's own space-y
+         sets the gap to the rows below it. Both come to 24px so the three rows
+         are evenly spaced. -->
+    <div class="print-keep grid grid-cols-2 lg:grid-cols-3 gap-x-4 sm:gap-x-6 gap-y-5 px-4 sm:px-6 lg:px-10 pt-5 sm:pt-6 pb-3 text-sm">
       <div class="col-span-2 lg:col-span-1">
         <div class="text-[10px] font-mono tracking-[0.2em] text-muted uppercase">Prepared for</div>
         <div class="mt-1.5 font-semibold leading-snug">{{ project.name }}</div>
@@ -338,9 +341,11 @@ const columns: TableColumn<InvoiceRow>[] = [
     </div>
 
     <!-- Totals block (moved to top, right under meta) -->
-    <div class="print-keep px-4 sm:px-6 lg:px-10 py-6 border-b border-default space-y-5">
-      <!-- All-inclusive group -->
-      <div class="@container rounded-lg border border-default p-3.5 sm:p-4">
+    <div class="print-keep px-4 sm:px-6 lg:px-10 pt-3 pb-5 border-b border-default space-y-6">
+      <!-- All-inclusive group. No border or padding of its own: the figures line
+           up with the rest of the card's text, and the spacing above plus the
+           row below carries the separation. -->
+      <div class="@container">
         <div class="flex items-center">
           <div class="text-[10px] font-mono tracking-[0.2em] text-muted uppercase">All-inclusive</div>
           <TotalExplainer v-bind="TOTAL_EXPLAINERS.allInclusive" />
@@ -369,13 +374,13 @@ const columns: TableColumn<InvoiceRow>[] = [
       </div>
 
       <!-- Move-in / total cash impact -->
-      <div v-if="totalLines.length" class="rounded-lg border border-default p-4 grid grid-cols-2 gap-x-4 sm:gap-x-6 gap-y-4">
+      <div v-if="totalLines.length" class="grid grid-cols-2 gap-x-4 sm:gap-x-6 gap-y-3">
         <div v-for="line in totalLines" :key="line.label">
           <div class="flex items-center">
             <div class="text-[10px] font-mono tracking-[0.2em] text-muted uppercase">{{ line.label }}</div>
             <TotalExplainer v-if="line.explainer" v-bind="line.explainer" />
           </div>
-          <div class="mt-1 text-xl sm:text-2xl font-bold tabular-num">{{ line.value }}</div>
+          <div class="mt-0.5 text-xl sm:text-2xl font-bold tabular-num">{{ line.value }}</div>
           <div v-if="line.sub" class="text-xs text-muted mt-0.5">{{ line.sub }}</div>
         </div>
       </div>
