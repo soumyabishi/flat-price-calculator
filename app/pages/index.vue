@@ -77,6 +77,10 @@ const navItems = computed((): NavigationMenuItem[][] => [
   })),
 ])
 
+const tabIndex = computed(() => Math.max(0, stepItems.value.findIndex(s => s.value === activeTab.value)))
+const prevStep = computed(() => tabIndex.value > 0 ? stepItems.value[tabIndex.value - 1] : undefined)
+const nextStep = computed(() => tabIndex.value < stepItems.value.length - 1 ? stepItems.value[tabIndex.value + 1] : undefined)
+
 const stepItems = computed(() => {
   const items = [
     { label: 'Flat', title: 'Flat', value: 'basic', icon: 'i-ph-info', slot: 'basic' },
@@ -279,7 +283,7 @@ function onDragStart(e: PointerEvent) {
         </div>
 
         <!-- Right: form section -->
-        <div class="flex-1 min-w-0 overflow-y-auto">
+        <div class="flex-1 min-w-0 overflow-y-auto overflow-x-hidden">
             <div v-if="activeTab === 'basic'">
               <div>
                 <div class="rounded-lg border border-default p-4 space-y-4">
@@ -579,6 +583,27 @@ function onDragStart(e: PointerEvent) {
                   <div v-else class="text-xs text-muted">Toggle on to plan rent during construction</div>
                 </section>
               </div>
+            </div>
+
+            <!-- Sticky prev / next -->
+            <div class="sticky bottom-0 z-10 -mx-2 sm:-mx-4 px-4 sm:px-6 py-3 bg-default/90 backdrop-blur border-t border-default mt-6 flex items-center justify-between gap-3">
+              <UButton
+                v-if="prevStep"
+                variant="outline"
+                color="neutral"
+                icon="i-ph-arrow-left"
+                :label="prevStep.title"
+                @click="activeTab = prevStep.value"
+              />
+              <span v-else />
+              <UButton
+                v-if="nextStep"
+                variant="solid"
+                color="primary"
+                trailing-icon="i-ph-arrow-right"
+                :label="`Next: ${nextStep.title}`"
+                @click="activeTab = nextStep.value"
+              />
             </div>
         </div>
       </section>

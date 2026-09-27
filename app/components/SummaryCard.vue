@@ -232,7 +232,10 @@ const columns: TableColumn<InvoiceRow>[] = [
       <div>
         <div class="text-[10px] font-mono tracking-[0.2em] text-muted uppercase">Rate / sq.ft.</div>
         <div class="mt-1.5 font-medium tabular-num">{{ formatINR(project.baseRatePerSqft) }}</div>
-        <div class="mt-3 text-[10px] font-mono tracking-[0.2em] text-muted uppercase">All-inclusive / sq.ft.</div>
+      </div>
+
+      <div>
+        <div class="text-[10px] font-mono tracking-[0.2em] text-muted uppercase">All-inclusive / sq.ft.</div>
         <div class="mt-1 font-medium tabular-num">₹{{ result.perSqft.toLocaleString('en-IN', { maximumFractionDigits: 0 }) }}</div>
       </div>
     </div>
