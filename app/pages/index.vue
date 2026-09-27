@@ -160,7 +160,7 @@ function onDragStart(e: PointerEvent) {
             <UBadge color="neutral" variant="subtle" size="sm">v2</UBadge>
           </div>
 
-          <div class="flex items-center gap-2 flex-1 min-w-0 overflow-x-auto">
+          <div class="flex items-center gap-2 flex-1 min-w-0 overflow-x-auto scrollbar-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <UFieldGroup v-for="p in projects" :key="p.id" class="shrink-0">
               <UButton
                 :variant="p.id === active.id ? 'solid' : 'outline'"
@@ -223,7 +223,6 @@ function onDragStart(e: PointerEvent) {
             >
               <UButton icon="i-ph-dots-three" variant="outline" color="neutral" size="sm" />
             </UDropdownMenu>
-            <UColorModeSelect class="w-28" color="neutral" />
             <input ref="fileInput" type="file" accept=".json" class="hidden" @change="onImport">
           </div>
         </div>
@@ -267,15 +266,14 @@ function onDragStart(e: PointerEvent) {
           <div class="sticky top-0">
             <div class="mb-3">
               <h2 class="text-base font-semibold text-highlighted">Project details</h2>
-              <p class="text-xs text-muted mt-0.5 max-w-24">Fill in the sections to build the estimate</p>
+              <p class="text-xs text-muted mt-0.5 max-w-40">Fill in the sections to build the stimate</p>
             </div>
             <UNavigationMenu
               orientation="vertical"
-              highlight
               color="primary"
               variant="pill"
               :items="navItems"
-              class="w-36"
+              class="w-42"
             />
           </div>
         </div>
@@ -283,7 +281,7 @@ function onDragStart(e: PointerEvent) {
         <!-- Right: form section -->
         <div class="flex-1 min-w-0 overflow-y-auto">
             <div v-if="activeTab === 'basic'">
-              <div class="pt-4">
+              <div>
                 <div class="rounded-lg border border-default p-4 space-y-4">
                   <UFormField label="Project name" size="md">
                     <UInput v-model="active.name" class="w-full" placeholder="e.g. Rajapushpa Imperia C-2204" />
