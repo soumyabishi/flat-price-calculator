@@ -233,7 +233,7 @@ function onExport() {
         </template>
       </UModal>
 
-      <div class="grid gap-8 lg:grid-cols-[1fr_26rem] xl:grid-cols-[1fr_28rem]">
+      <div class="grid gap-8 lg:grid-cols-[1fr_30rem] xl:grid-cols-[1fr_32rem]">
         <!-- LEFT: inputs in tabs -->
         <div>
           <UTabs

@@ -19,10 +19,35 @@ const BASIS_OPTIONS: { label: string, value: ChargeBasis }[] = [
   { label: '₹ / unit × count', value: 'perUnit' },
 ]
 
+const GST_OPTIONS = [
+  { label: 'No GST', value: 'none' },
+  { label: '5%', value: '5' },
+  { label: '12%', value: '12' },
+  { label: '18%', value: '18' },
+  { label: 'Custom…', value: 'custom' },
+]
+
 const GOV_IDS = new Set(['stamp-duty', 'transfer-duty', 'registration-fee', 'tds'])
 
 function isGov(item: ChargeItem) {
   return GOV_IDS.has(item.id)
+}
+
+// bridge between gstApplicable/gstRate (fraction) and the single select
+function gstSelectOf(item: ChargeItem): string {
+  if (!item.gstApplicable) return 'none'
+  const pctVal = item.gstRate * 100
+  if ([5, 12, 18].includes(pctVal)) return String(pctVal)
+  return 'custom'
+}
+
+function setGstSelect(item: ChargeItem, v: string) {
+  if (v === 'none') {
+    item.gstApplicable = false
+    return
+  }
+  item.gstApplicable = true
+  if (v !== 'custom') item.gstRate = Number(v) / 100
 }
 </script>
 
@@ -100,17 +125,17 @@ function isGov(item: ChargeItem) {
               class="w-28"
             />
 
-            <!-- GST toggle -->
-            <USwitch
-              v-model="item.gstApplicable"
-              size="xs"
+            <!-- GST: single select (None / 5% / 12% / 18% / custom) -->
+            <USelect
+              :model-value="gstSelectOf(item)"
+              size="sm"
+              class="w-32"
+              :items="GST_OPTIONS"
               :disabled="isGov(item)"
+              @update:model-value="(v: string) => setGstSelect(item, v)"
             />
-            <span class="text-xs text-muted">GST</span>
-
-            <!-- GST rate -->
             <UInputNumber
-              v-if="item.gstApplicable"
+              v-if="gstSelectOf(item) === 'custom'"
               v-model="item.gstRate"
               :min="0"
               :max="0.5"
@@ -118,7 +143,8 @@ function isGov(item: ChargeItem) {
               :increment="false"
               :decrement="false"
               disable-wheel-change
-              :formatOptions="{ maximumFractionDigits: 3 }"
+              :formatOptions="{ maximumFractionDigits: 1 }"
+              placeholder="Rate"
               size="sm"
               class="w-24"
             />
