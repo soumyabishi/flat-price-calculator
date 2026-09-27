@@ -192,7 +192,7 @@ const columns: TableColumn<InvoiceRow>[] = [
 </script>
 
 <template>
-  <UCard class="rounded-xl border-default ring ring-muted/40" :ui="{ body: 'p-0 sm:p-0' }">
+  <UCard class="rounded-xl border-default shadow-lg shadow-black/10 dark:shadow-black/40 ring ring-muted/40" :ui="{ body: 'p-0 sm:p-0' }">
     <!-- Header -->
     <div class="flex items-start justify-between gap-6 px-6 sm:px-10 pt-8 pb-6">
       <div>

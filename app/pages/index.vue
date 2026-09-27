@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { NavigationMenuItem } from '@nuxt/ui'
 import { formatINR } from '~/composables/computeProject'
 import type { ChargeItem } from '~/composables/useProjectConfig'
 
@@ -67,17 +68,26 @@ const fileInput = ref<HTMLInputElement | null>(null)
 
 const activeTab = ref('basic')
 
-const tabItems = computed(() => {
+const navItems = computed((): NavigationMenuItem[][] => [
+  stepItems.value.map(s => ({
+    label: s.title,
+    icon: s.icon,
+    active: activeTab.value === s.value,
+    onSelect: () => { activeTab.value = s.value },
+  })),
+])
+
+const stepItems = computed(() => {
   const items = [
-    { label: 'Flat', value: 'basic', icon: 'i-ph-info', slot: 'basic' },
-    { label: 'Builder', value: 'builder', icon: 'i-ph-wrench', slot: 'builder' },
-    { label: 'Government', value: 'government', icon: 'i-ph-bank', slot: 'government' },
-    { label: 'Possession', value: 'possession', icon: 'i-ph-key', slot: 'possession' },
-    { label: 'Loan', value: 'loan', icon: 'i-ph-percent', slot: 'loan' },
-    { label: 'Interiors', value: 'interiors', icon: 'i-ph-paint-brush', slot: 'interiors' },
+    { label: 'Flat', title: 'Flat', value: 'basic', icon: 'i-ph-info', slot: 'basic' },
+    { label: 'Builder', title: 'Builder', value: 'builder', icon: 'i-ph-wrench', slot: 'builder' },
+    { label: 'Government', title: 'Government', value: 'government', icon: 'i-ph-bank', slot: 'government' },
+    { label: 'Possession', title: 'Possession', value: 'possession', icon: 'i-ph-key', slot: 'possession' },
+    { label: 'Loan', title: 'Loan', value: 'loan', icon: 'i-ph-percent', slot: 'loan' },
+    { label: 'Interiors', title: 'Interiors', value: 'interiors', icon: 'i-ph-paint-brush', slot: 'interiors' },
   ]
   if (active.value.possessionStatus === 'underConstruction') {
-    items.push({ label: 'Rent', value: 'rent', icon: 'i-ph-buildings', slot: 'rent' })
+    items.push({ label: 'Rent', title: 'Rent', value: 'rent', icon: 'i-ph-buildings', slot: 'rent' })
   }
   return items
 })
@@ -113,17 +123,72 @@ function onExport() {
   a.click()
   URL.revokeObjectURL(url)
 }
+
+const leftWidth = ref(55)
+const dragging = ref(false)
+const splitContainer = ref<HTMLElement | null>(null)
+
+function onDragStart(e: PointerEvent) {
+  dragging.value = true
+  const handle = e.currentTarget as HTMLElement
+  handle.setPointerCapture(e.pointerId)
+  const move = (ev: PointerEvent) => {
+    const container = handle.parentElement
+    if (!container) return
+    const rect = container.getBoundingClientRect()
+    const pct = ((ev.clientX - rect.left) / rect.width) * 100
+    leftWidth.value = Math.min(75, Math.max(25, pct))
+  }
+  const up = () => {
+    dragging.value = false
+    handle.removeEventListener('pointermove', move)
+    handle.removeEventListener('pointerup', up)
+  }
+  handle.addEventListener('pointermove', move)
+  handle.addEventListener('pointerup', up)
+}
 </script>
 
 <template>
   <div class="h-screen flex flex-col bg-default text-default overflow-hidden">
     <UContainer class="shrink-0 py-2.5 w-full">
       <header>
-        <div class="flex items-center justify-between gap-4">
-          <div class="flex items-center gap-2.5 min-w-0">
+        <div class="flex items-center gap-3">
+          <div class="flex items-center gap-2.5 shrink-0">
             <UIcon name="i-ph-buildings-fill" class="size-5 text-primary shrink-0" />
             <span class="text-lg font-bold tracking-tight">FlatBuy</span>
             <UBadge color="neutral" variant="subtle" size="sm">v2</UBadge>
+          </div>
+
+          <div class="flex items-center gap-2 flex-1 min-w-0 overflow-x-auto">
+            <UFieldGroup v-for="p in projects" :key="p.id" class="shrink-0">
+              <UButton
+                :variant="p.id === active.id ? 'solid' : 'outline'"
+                color="neutral"
+                size="sm"
+                :label="p.name"
+                @click="activeId = p.id"
+              />
+              <UDropdownMenu
+                :items="[[
+                  { label: 'Duplicate', icon: 'i-ph-copy', onSelect: () => duplicateProject(p.id) },
+                  { label: 'Remove', icon: 'i-ph-trash', color: 'error' as const, onSelect: () => deleteTarget = p },
+                ]]"
+                :content="{ align: 'end' }"
+              >
+                <UButton
+                  size="sm"
+                  :variant="p.id === active.id ? 'solid' : 'outline'"
+                  color="neutral"
+                  icon="i-ph-dots-three-vertical"
+                  :aria-label="`More actions for ${p.name}`"
+                  class="!px-1.5"
+                />
+              </UDropdownMenu>
+            </UFieldGroup>
+            <UButton size="sm" variant="ghost" color="neutral" icon="i-ph-plus" class="shrink-0" @click="addProject(`Project ${projects.length + 1}`)">
+              New
+            </UButton>
           </div>
 
           <div class="flex items-center gap-2 shrink-0">
@@ -158,39 +223,9 @@ function onExport() {
             >
               <UButton icon="i-ph-dots-three" variant="outline" color="neutral" size="sm" />
             </UDropdownMenu>
-            <UColorModeSelect class="w-28" color="neutral" size="sm" />
+            <UColorModeSelect class="w-28" color="neutral" />
             <input ref="fileInput" type="file" accept=".json" class="hidden" @change="onImport">
           </div>
-        </div>
-
-        <div class="mt-2.5 flex items-center gap-2 flex-wrap">
-          <UFieldGroup v-for="p in projects" :key="p.id">
-            <UButton
-              :variant="p.id === active.id ? 'solid' : 'outline'"
-              color="neutral"
-              :label="p.name"
-              @click="activeId = p.id"
-            />
-            <UDropdownMenu
-              :items="[[
-                { label: 'Duplicate', icon: 'i-ph-copy', onSelect: () => duplicateProject(p.id) },
-                { label: 'Remove', icon: 'i-ph-trash', color: 'error' as const, onSelect: () => deleteTarget = p },
-              ]]"
-              :content="{ align: 'end' }"
-            >
-              <UButton
-                size="sm"
-                :variant="p.id === active.id ? 'solid' : 'outline'"
-                color="neutral"
-                icon="i-ph-dots-three-vertical"
-                :aria-label="`More actions for ${p.name}`"
-                class="!px-1.5"
-              />
-            </UDropdownMenu>
-          </UFieldGroup>
-          <UButton size="sm" variant="ghost" color="neutral" icon="i-ph-plus" @click="addProject(`Project ${projects.length + 1}`)">
-            New
-          </UButton>
         </div>
       </header>
     </UContainer>
@@ -224,26 +259,30 @@ function onExport() {
         </template>
     </UModal>
 
-    <!-- Splitter: inputs left, summary right; each panel scrolls independently -->
-    <div class="flex-1 min-h-0 w-full">
-      <USplitter
-        id="flatbuy-splitter"
-        :items="[
-          { slot: 'left', minSize: 25, defaultSize: 55 },
-          { slot: 'right', minSize: 25, defaultSize: 45 },
-        ]"
-      >
-        <template #left>
-          <div class="h-full overflow-y-auto px-6 sm:px-10 py-6">
-            <div class="max-w-3xl mx-auto">
-            <UTabs
-              v-model="activeTab"
-              :items="tabItems"
+    <!-- Custom split: inputs left, summary right; draggable divider, each panel scrolls independently -->
+    <div class="flex-1 min-h-0 w-full flex">
+      <section class="h-full px-4 sm:px-6 py-6 flex gap-6" :style="{ width: leftWidth + '%' }">
+        <!-- Left panel: sticky nav -->
+        <div class="h-full shrink-0">
+          <div class="sticky top-0">
+            <div class="mb-3">
+              <h2 class="text-base font-semibold text-highlighted">Project details</h2>
+              <p class="text-xs text-muted mt-0.5 max-w-24">Fill in the sections to build the estimate</p>
+            </div>
+            <UNavigationMenu
+              orientation="vertical"
+              highlight
+              color="primary"
               variant="pill"
-              size="md"
-              class="mb-5"
-            >
-            <template #basic>
+              :items="navItems"
+              class="w-36"
+            />
+          </div>
+        </div>
+
+        <!-- Right: form section -->
+        <div class="flex-1 min-w-0 overflow-y-auto">
+            <div v-if="activeTab === 'basic'">
               <div class="pt-4">
                 <div class="rounded-lg border border-default p-4 space-y-4">
                   <UFormField label="Project name" size="md">
@@ -331,9 +370,9 @@ function onExport() {
                   </UFormField>
                 </div>
               </div>
-            </template>
+            </div>
 
-            <template #builder>
+            <div v-if="activeTab === 'builder'">
               <div class="pt-4">
                 <ChargeSection
                   :project="active"
@@ -342,9 +381,9 @@ function onExport() {
                   :items="itemsFor(active, 'builder')"
                 />
               </div>
-            </template>
+            </div>
 
-            <template #government>
+            <div v-if="activeTab === 'government'">
               <div class="pt-4">
                 <ChargeSection
                   :project="active"
@@ -353,9 +392,9 @@ function onExport() {
                   :items="itemsFor(active, 'government')"
                 />
               </div>
-            </template>
+            </div>
 
-            <template #possession>
+            <div v-if="activeTab === 'possession'">
               <div class="pt-4">
                 <ChargeSection
                   :project="active"
@@ -364,9 +403,9 @@ function onExport() {
                   :items="itemsFor(active, 'possession')"
                 />
               </div>
-            </template>
+            </div>
 
-            <template #loan>
+            <div v-if="activeTab === 'loan'">
               <div class="pt-4">
                 <section class="rounded-lg border border-default p-4">
                   <div class="flex items-center gap-2 mb-4">
@@ -443,9 +482,9 @@ function onExport() {
                   <div v-else class="text-xs text-muted">Toggle on to plan the loan</div>
                 </section>
               </div>
-            </template>
+            </div>
 
-            <template #interiors>
+            <div v-if="activeTab === 'interiors'">
               <div class="pt-4">
                 <section class="rounded-lg border border-default p-4">
                   <div class="flex items-center gap-2 mb-4">
@@ -471,9 +510,9 @@ function onExport() {
                   <div v-else class="text-xs text-muted">Toggle on to plan interiors</div>
                 </section>
               </div>
-            </template>
+            </div>
 
-            <template #rent>
+            <div v-if="activeTab === 'rent'">
               <div class="pt-4">
                 <section class="rounded-lg border border-default p-4">
                   <div class="flex items-center gap-2 mb-4">
@@ -542,20 +581,35 @@ function onExport() {
                   <div v-else class="text-xs text-muted">Toggle on to plan rent during construction</div>
                 </section>
               </div>
-            </template>
-          </UTabs>
-          </div>
-          </div>
-        </template>
-
-        <template #right>
-          <div class="h-full overflow-y-auto px-6 sm:px-10 py-6">
-            <div class="max-w-[210mm] mx-auto pb-10">
-              <SummaryCard :project="active" />
             </div>
+        </div>
+      </section>
+
+      <!-- Drag handle -->
+      <div
+        class="relative w-px shrink-0 cursor-col-resize bg-default"
+        @pointerdown="onDragStart"
+      >
+        <!-- wide hit area + hover rail -->
+        <div class="absolute inset-y-0 -inset-x-2.5 z-10 flex items-center justify-center group cursor-col-resize">
+          <div
+            class="h-16 w-6 rounded-full flex items-center justify-center transition-colors duration-150"
+            :class="dragging ? 'bg-primary/80' : 'bg-accented/30'"
+          >
+            <UIcon
+              name="i-lucide-grip-vertical"
+              class="size-4 text-muted"
+              :class="dragging ? 'text-inverted' : ''"
+            />
           </div>
-        </template>
-      </USplitter>
+        </div>
+      </div>
+
+      <section class="h-full overflow-y-auto px-4 sm:px-6 py-6 flex-1 min-w-0 bg-elevated/30">
+        <div class="max-w-[210mm] mx-auto">
+          <SummaryCard :project="active" />
+        </div>
+      </section>
     </div>
   </div>
 </template>

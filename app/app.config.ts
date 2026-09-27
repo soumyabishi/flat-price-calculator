@@ -62,6 +62,36 @@ export default defineAppConfig({
       defaultVariants: {
         variant: 'soft'
       }
+    },
+    input: {
+      defaultVariants: {
+        variant: 'subtle',
+        size: 'md'
+      }
+    },
+    inputNumber: {
+      defaultVariants: {
+        variant: 'subtle',
+        size: 'md'
+      }
+    },
+    select: {
+      defaultVariants: {
+        variant: 'subtle',
+        size: 'md'
+      }
+    },
+    textarea: {
+      defaultVariants: {
+        variant: 'subtle',
+        size: 'md'
+      }
+    },
+    selectMenu: {
+      defaultVariants: {
+        variant: 'subtle',
+        size: 'md'
+      }
     }
   }
 })

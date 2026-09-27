@@ -74,7 +74,6 @@ function setGstSelect(item: ChargeItem, v: string) {
           />
           <UInput
             v-model="item.label"
-            size="sm"
             class="flex-1"
             placeholder="Charge name"
           />
@@ -89,7 +88,6 @@ function setGstSelect(item: ChargeItem, v: string) {
             <!-- basis selector -->
             <USelect
               v-model="item.basis"
-              size="sm"
               class="w-40"
               :items="BASIS_OPTIONS"
               :disabled="isGov(item)"
@@ -106,7 +104,6 @@ function setGstSelect(item: ChargeItem, v: string) {
               disable-wheel-change
               :formatOptions="{ maximumFractionDigits: 0 }"
               placeholder="Floors"
-              size="sm"
               class="w-28"
             />
 
@@ -121,14 +118,12 @@ function setGstSelect(item: ChargeItem, v: string) {
               disable-wheel-change
               :formatOptions="{ maximumFractionDigits: 0 }"
               placeholder="Units"
-              size="sm"
               class="w-28"
             />
 
             <!-- GST: single select (None / 5% / 12% / 18% / custom) -->
             <USelect
               :model-value="gstSelectOf(item)"
-              size="sm"
               class="w-32"
               :items="GST_OPTIONS"
               :disabled="isGov(item)"
@@ -145,7 +140,6 @@ function setGstSelect(item: ChargeItem, v: string) {
               disable-wheel-change
               :formatOptions="{ maximumFractionDigits: 1 }"
               placeholder="Rate"
-              size="sm"
               class="w-24"
             />
           </div>
@@ -162,7 +156,6 @@ function setGstSelect(item: ChargeItem, v: string) {
               :formatOptions="isGov(item)
                 ? { maximumFractionDigits: 3 }
                 : { maximumFractionDigits: 2 }"
-              size="sm"
               class="flex-1"
               :placeholder="isGov(item) ? 'Rate (e.g. 0.04 = 4%)' : 'Amount'"
             />
