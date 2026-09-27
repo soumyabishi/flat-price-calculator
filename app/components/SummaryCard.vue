@@ -139,15 +139,65 @@ const rows = computed<InvoiceRow[]>(() => {
   return out
 })
 
-type TotalLine = { label: string, sub?: string, value: string, big?: boolean }
+type TotalExplainerData = { label: string, answers: string, includes: string[], excludes?: string[], footnote?: string }
+
+/**
+ * Why each headline total is drawn where it is, and what it deliberately
+ * swallows. "Total" is ambiguous in this market, so every figure states its
+ * own boundaries rather than asking the reader to trust a single number.
+ */
+const TOTAL_EXPLAINERS: Record<string, TotalExplainerData> = {
+  allInclusive: {
+    label: 'All-inclusive',
+    answers: 'What the flat actually costs once every charge on the builder’s price sheet is counted.',
+    includes: [
+      'Net flat cost after discount, plus builder charges — PLC, floor-rise, parking, clubhouse, infrastructure',
+      'Government charges — GST, stamp duty, registration, transfer duty',
+      'Possession and initial charges — advance maintenance, corpus, society formation, utility & maintenance deposits',
+    ],
+    excludes: [
+      'TDS 1% u/s 194-IA — you write the cheque, but it is credited back against what you owe the builder',
+      'Interiors / move-in spend',
+      'Rent during construction',
+    ],
+    footnote: 'This is the figure to compare two projects on, per sq.ft. — not the advertised rate.',
+  },
+  moveInCost: {
+    label: 'MOVE-IN COST',
+    answers: 'What you need in the bank on the day you take possession and move in.',
+    includes: [
+      'Everything in All-inclusive',
+      'Your interiors / move-in budget — flooring, kitchen, paint, fixtures, appliances',
+    ],
+    excludes: [
+      'Rent during construction',
+      'Home-loan interest and EMI',
+    ],
+    footnote: 'Add this to your loan disbursement and first-year running costs to know your real cash requirement.',
+  },
+  cashImpact: {
+    label: 'TOTAL CASH IMPACT',
+    answers: 'What it costs to get from today to actually living in the flat.',
+    includes: [
+      'Move-in cost',
+      'Every month’s rent until handover, with your yearly escalation applied',
+    ],
+    excludes: [
+      'Home-loan interest and EMI — not computed yet',
+    ],
+    footnote: 'If you have not set a handover date, this assumes an 18-month build. Home-loan interest is not included, so a financed buyer’s true cost is higher by the entire interest component.',
+  },
+}
+
+type TotalLine = { label: string, sub?: string, value: string, big?: boolean, explainer?: TotalExplainerData }
 const totalLines = computed<TotalLine[]>(() => {
   const r = result.value
   const lines: TotalLine[] = []
   if (interiorsOn.value) {
-    lines.push({ label: 'MOVE-IN COST', sub: `All-inclusive + ${formatINR(props.project.interiorsBudget, { compact: true })} interiors`, value: formatINR(r.cashNeeded) })
+    lines.push({ label: 'MOVE-IN COST', sub: `All-inclusive + ${formatINR(props.project.interiorsBudget, { compact: true })} interiors`, value: formatINR(r.cashNeeded), explainer: TOTAL_EXPLAINERS.moveInCost })
   }
   if (rentOn.value && props.project.possessionStatus === 'underConstruction' && props.project.rentDuringConstruction > 0) {
-    lines.push({ label: 'TOTAL CASH IMPACT', sub: `Move-in cost + ${formatINR(r.rentOutlay, { compact: true })} rent`, value: formatINR(r.cashNeeded + r.rentOutlay) })
+    lines.push({ label: 'TOTAL CASH IMPACT', sub: `Move-in cost + ${formatINR(r.rentOutlay, { compact: true })} rent`, value: formatINR(r.cashNeeded + r.rentOutlay), explainer: TOTAL_EXPLAINERS.cashImpact })
   }
   return lines
 })
@@ -258,6 +308,9 @@ const columns: TableColumn<InvoiceRow>[] = [
       <div class="text-[10px] font-mono tracking-[0.25em] text-muted uppercase">
         Cost Calculator
       </div>
+      <span class="ml-auto self-center print:hidden">
+        <WhyExplainer />
+      </span>
     </div>
 
     <USeparator />
@@ -287,20 +340,30 @@ const columns: TableColumn<InvoiceRow>[] = [
     <!-- Totals block (moved to top, right under meta) -->
     <div class="print-keep px-4 sm:px-6 lg:px-10 py-6 border-b border-default space-y-5">
       <!-- All-inclusive group -->
-      <div class="rounded-lg border border-default p-3.5 sm:p-4">
-        <div class="text-[10px] font-mono tracking-[0.2em] text-muted uppercase">All-inclusive</div>
-        <div class="mt-1 text-[1.75rem] sm:text-2xl font-bold tabular-num text-primary">{{ formatINR(animatedTotal) }}</div>
-        <div class="text-xs text-muted mt-0.5">Flat + builder + govt + possession</div>
-        <div class="mt-3.5 pt-3 border-t border-default grid grid-cols-2 gap-x-4 sm:gap-x-6 gap-y-3">
+      <div class="@container rounded-lg border border-default p-3.5 sm:p-4">
+        <div class="flex items-center">
+          <div class="text-[10px] font-mono tracking-[0.2em] text-muted uppercase">All-inclusive</div>
+          <TotalExplainer v-bind="TOTAL_EXPLAINERS.allInclusive" />
+        </div>
+        <!-- The total, what it is made of, and the rate it works out to all read
+             across in a single row once the card is wide enough, and stack when
+             it is not. Decided by container width, not viewport: the desktop
+             split leaves this pane far narrower than the window. The threshold
+             is set so the "Flat + builder · rate" caption still fits on one
+             line in its column — below it, a single column gives it full width. -->
+        <div class="mt-1 grid grid-cols-1 gap-x-6 gap-y-3 @min-[27rem]:grid-cols-2 @min-[27rem]:items-start">
           <div>
-            <div class="text-base sm:text-lg font-semibold tabular-num">{{ formatINR(result.saleConsideration) }}</div>
-            <div class="text-xs text-muted mt-0.5">Flat + builder</div>
+            <div class="text-[1.75rem] sm:text-2xl font-bold tabular-num text-primary">{{ formatINR(animatedTotal) }}</div>
+            <div class="text-xs text-muted mt-0.5">Flat + builder + govt + possession</div>
           </div>
           <div>
-            <div class="text-base sm:text-lg font-semibold tabular-num">
-              ₹{{ Math.round(result.flatBuilderPerSqft).toLocaleString('en-IN') }}<span class="text-xs font-medium text-muted"> / sq.ft.</span>
+            <div class="text-base sm:text-lg font-semibold tabular-num">{{ formatINR(result.saleConsideration) }}</div>
+            <div class="mt-0.5 flex flex-wrap items-baseline gap-x-2 text-xs text-muted">
+              <span>Flat + builder</span>
+              <span class="tabular-num">
+                · all-in ₹{{ Math.round(result.flatBuilderPerSqft).toLocaleString('en-IN') }} / sq.ft.
+              </span>
             </div>
-            <div class="text-xs text-muted mt-0.5">All-inclusive rate</div>
           </div>
         </div>
       </div>
@@ -308,7 +371,10 @@ const columns: TableColumn<InvoiceRow>[] = [
       <!-- Move-in / total cash impact -->
       <div v-if="totalLines.length" class="rounded-lg border border-default p-4 grid grid-cols-2 gap-x-4 sm:gap-x-6 gap-y-4">
         <div v-for="line in totalLines" :key="line.label">
-          <div class="text-[10px] font-mono tracking-[0.2em] text-muted uppercase">{{ line.label }}</div>
+          <div class="flex items-center">
+            <div class="text-[10px] font-mono tracking-[0.2em] text-muted uppercase">{{ line.label }}</div>
+            <TotalExplainer v-if="line.explainer" v-bind="line.explainer" />
+          </div>
           <div class="mt-1 text-xl sm:text-2xl font-bold tabular-num">{{ line.value }}</div>
           <div v-if="line.sub" class="text-xs text-muted mt-0.5">{{ line.sub }}</div>
         </div>

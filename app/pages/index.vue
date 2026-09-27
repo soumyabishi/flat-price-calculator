@@ -222,7 +222,11 @@ function onDragStart(e: PointerEvent) {
             >
               <span class="hidden sm:inline">{{ justSaved ? 'Saved' : dirty ? 'Save' : 'Saved' }}</span>
             </UButton>
+            <!-- Compare is hidden for now: it ranks projects on absolute rupee
+                 totals, which is misleading when the flats are different sizes.
+                 Restore once the table compares on a per-sq.ft. basis. -->
             <UButton
+              v-if="false"
               to="/compare"
               variant="outline"
               color="neutral"
