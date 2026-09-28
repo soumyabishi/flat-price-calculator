@@ -5,10 +5,10 @@ const STORAGE_KEY = 'flatbuy-projects-v2'
 
 /**
  * Seed projects from real price sheets (reproduce each sheet's own totals):
- * - Cloudswood Skye C-2204 (payment-plan sheet)
- * - Rajapushpa Imperia (ready-to-move tower)
- * - GHR Callisto T2&3 (under construction)
- * - Anvita IVANA C&F tower
+ * - Prestige Lakeside Habitat (payment-plan sheet)
+ * - Godrej Woodsman Estate (ready-to-move tower)
+ * - Sobha Dream Acres (under construction)
+ * - DLF Ultima
  */
 function seedProjects(): Project[] {
   function patch(p: Project, fn: (set: (id: string, props: any) => void) => void) {
@@ -20,8 +20,8 @@ function seedProjects(): Project[] {
     return p
   }
 
-  // 1. Cloudswood Skye C-2204 — 1835 sft, floor 22, base 8,199
-  const skye = createProject('Cloudswood Skye C-2204', {
+  // 1. Prestige Lakeside Habitat — 1835 sft, floor 22, base 8,199
+  const skye = createProject('Prestige Lakeside Habitat', {
     areaSqft: 1835,
     floorNo: 22,
     baseRatePerSqft: 8199,
@@ -39,9 +39,17 @@ function seedProjects(): Project[] {
     set('corpus-fund', { value: 50, gstApplicable: false })
     set('advance-maintenance', { label: 'Advance Maintenance (1 Year)', basis: 'perSqft', value: 48, gstRate: 0.18, gstApplicable: true })
   })
+  // Prestige seeds a full affordability picture: loan, interiors and rent until handover
+  skye.loan.enabled = true
+  skye.loan.downPayment = 3_000_000
+  skye.interiorsOn = true
+  skye.interiorsBudget = 1_500_000
+  skye.rentOn = true
+  skye.rentDuringConstruction = 35_000
+  skye.handoverDate = '2027-12'
 
-  // 2. Rajapushpa Imperia — ready to move, no GST on base
-  const imperia = createProject('Rajapushpa Imperia', {
+  // 2. Godrej Woodsman Estate — ready to move, no GST on base
+  const imperia = createProject('Godrej Woodsman Estate', {
     areaSqft: 1675,
     floorNo: 12,
     baseRatePerSqft: 8299,
@@ -59,8 +67,8 @@ function seedProjects(): Project[] {
     set('advance-maintenance', { label: 'Advance Maintenance (24 months)', basis: 'perSqft', value: 168, gstRate: 0.18, gstApplicable: true })
   })
 
-  // 3. GHR Callisto T2&3 — under construction
-  const callisto = createProject('GHR Callisto T2&3', {
+  // 3. Sobha Dream Acres — under construction
+  const callisto = createProject('Sobha Dream Acres', {
     areaSqft: 1535,
     floorNo: 9,
     baseRatePerSqft: 7199,
@@ -78,8 +86,8 @@ function seedProjects(): Project[] {
     set('advance-maintenance', { label: 'Maintenance (2 years @ ₹4/mo)', basis: 'perSqft', value: 96, gstRate: 0.18, gstApplicable: true })
   })
 
-  // 4. Anvita IVANA C&F tower
-  const ivana = createProject('Anvita IVANA C&F', {
+  // 4. DLF Ultima
+  const ivana = createProject('DLF Ultima', {
     areaSqft: 1675,
     floorNo: 11,
     baseRatePerSqft: 7699,
