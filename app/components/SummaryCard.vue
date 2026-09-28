@@ -56,7 +56,13 @@ const today = ref('')
 onMounted(() => {
   today.value = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
 })
-const possessionLabel = computed(() => props.project.possessionStatus === 'underConstruction' ? 'Under construction' : 'Ready to move')
+// Same two states and the same icons as the Possession status input, so the
+// choice on screen and the label on the card are recognisably the same thing.
+const POSSESSION = {
+  underConstruction: { label: 'Under construction', icon: 'i-ph-crane' },
+  readyToMove: { label: 'Ready to move', icon: 'i-ph-key' },
+} as const
+const possession = computed(() => POSSESSION[props.project.possessionStatus])
 
 type InvoiceRow = {
   id: string
@@ -118,8 +124,8 @@ const rows = computed<InvoiceRow[]>(() => {
         })
       }
     }
-    out.push({ id: `sub-${cat.key}`, label: `${cat.label} subtotal`, amount: formatINR(cat.subtotal), kind: 'subtotal' })
     out.push(...gstRows)
+    out.push({ id: `sub-${cat.key}`, label: `${cat.label} subtotal`, amount: formatINR(cat.subtotal), kind: 'subtotal' })
   }
 
   out.push({ id: 'tds', label: 'TDS 1% (not in total)', calc: 'Deducted from builder payment · Form 26QB', amount: formatINR(r.tds), kind: 'info' })
@@ -327,7 +333,10 @@ const columns: TableColumn<InvoiceRow>[] = [
           {{ project.areaSqft.toLocaleString('en-IN') }} sq.ft.<template v-if="project.floorNo">
             · Floor {{ project.floorNo }}</template>
         </div>
-        <div class="text-muted">{{ possessionLabel }}</div>
+        <div class="flex items-center gap-1.5 text-muted">
+          <UIcon :name="possession.icon" class="size-3.5 shrink-0" aria-hidden="true" />
+          <span>{{ possession.label }}</span>
+        </div>
       </div>
       <div>
         <div class="text-[10px] font-mono tracking-[0.2em] text-muted uppercase">Issue date</div>

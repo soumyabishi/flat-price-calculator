@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { NavigationMenuItem } from '@nuxt/ui'
+import type { NavigationMenuItem, RadioGroupItem } from '@nuxt/ui'
 import { formatINR } from '~/composables/computeProject'
 import { SHEET_PEEK } from '~/composables/sheetPeek'
 import { usePrintSummary } from '~/composables/usePrintSummary'
@@ -69,6 +69,17 @@ function itemsFor(project: { items: ChargeItem[] }, section: string): ChargeItem
 const fileInput = ref<HTMLInputElement | null>(null)
 
 const activeTab = ref('basic')
+
+/**
+ * Possession status drives real maths — GST applies on the flat cost only while
+ * under construction — so each option carries an icon and says what it does to
+ * the total. `description` is the key RadioGroup reads; the previous `hint` was
+ * silently ignored, which is why the GST line never showed.
+ */
+const POSSESSION_OPTIONS: RadioGroupItem[] = [
+  { label: 'Under construction', value: 'underConstruction', icon: 'i-ph-crane', description: 'GST applies on flat cost' },
+  { label: 'Ready to move', value: 'readyToMove', icon: 'i-ph-key', description: 'No GST on flat cost' },
+]
 
 const navItems = computed((): NavigationMenuItem[][] => [
   stepItems.value.map(s => ({
@@ -398,16 +409,67 @@ function onDragStart(e: PointerEvent) {
                   </div>
 
                   <UFormField label="Possession status" size="md">
+                    <!-- `icon` on a radio item only renders when the indicator is
+                         hidden, since the indicator is where a radio keeps its dot.
+                         The dot moves to a checkbox in the top-right instead: the
+                         default leading slot is centred under the icon and reads
+                         as decoration, whereas a corner checkbox is a familiar
+                         "this is picked" signal. aria-checked still comes from the
+                         radio itself, so it is announced either way. -->
                     <URadioGroup
                       v-model="active.possessionStatus"
-                      :items="[
-                        { label: 'Under construction', value: 'underConstruction', hint: 'GST applies on flat cost' },
-                        { label: 'Ready to move', value: 'readyToMove', hint: 'No GST on flat cost' },
-                      ]"
+                      :items="POSSESSION_OPTIONS"
                       variant="card"
                       orientation="horizontal"
-                      :ui="{ fieldset: 'w-full gap-x-3 !flex-col sm:!flex-row', item: 'flex-1 rounded-lg px-3 py-2.5 min-w-0' }"
-                    />
+                      indicator="hidden"
+                      :ui="{
+                        fieldset: 'w-full gap-x-3 !flex-col sm:!flex-row',
+                        item: 'relative flex-1 rounded-lg px-3 py-2.5 min-w-0',
+                        icon: 'size-6',
+                        description: 'text-[11px] leading-snug',
+                      }"
+                    >
+                      <template #label="{ item, modelValue }">
+                        <span class="font-medium text-default">{{ item.label }}</span>
+                        <span
+                          :class="[
+                            'absolute right-3 top-3 flex size-4.5 items-center justify-center rounded-full border transition-colors',
+                            modelValue === item.value
+                              ? 'border-primary bg-primary text-inverted'
+                              : 'border-accented bg-transparent text-transparent',
+                          ]"
+                          aria-hidden="true"
+                        >
+                          <UIcon name="i-ph-check" class="size-3" />
+                        </span>
+                      </template>
+                    </URadioGroup>
+                  </UFormField>
+
+                  <!-- Handover belongs beside possession status: it only means
+                       something while the flat is under construction, and rent
+                       during construction is calculated from it. -->
+                  <UFormField
+                    v-if="active.possessionStatus === 'underConstruction'"
+                    label="Expected handover"
+                    size="md"
+                  >
+                    <div class="flex gap-2">
+                      <USelect
+                        :model-value="handoverMonth"
+                        :items="MONTHS"
+                        placeholder="Month"
+                        class="w-full"
+                        @update:model-value="onHandoverMonth"
+                      />
+                      <USelect
+                        :model-value="handoverYear"
+                        :items="YEARS"
+                        placeholder="Year"
+                        class="w-28"
+                        @update:model-value="onHandoverYear"
+                      />
+                    </div>
                   </UFormField>
 
                   <USeparator class="!my-5" />
@@ -614,26 +676,9 @@ function onDragStart(e: PointerEvent) {
                         <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted">₹ / month</span>
                       </div>
                     </UFormField>
-                      <div class="grid grid-cols-2 gap-4">
-                        <UFormField label="Expected handover" size="md">
-                          <div class="flex gap-2">
-                            <USelect
-                              :model-value="handoverMonth"
-                              :items="MONTHS"
-                              placeholder="Month"
-                              class="w-full"
-                              @update:model-value="onHandoverMonth"
-                            />
-                            <USelect
-                              :model-value="handoverYear"
-                              :items="YEARS"
-                              placeholder="Year"
-                              class="w-28"
-                              @update:model-value="onHandoverYear"
-                            />
-                          </div>
-                        </UFormField>
-                      <UFormField label="Annual rent increase" size="md">
+                    <!-- Handover moved to the Flat tab: it is a property of the
+                         possession status, not of rent, and rent only consumes it. -->
+                    <UFormField label="Annual rent increase" size="md">
                         <div class="relative">
                           <UInputNumber
                             v-model="active.rentEscalationPct"
@@ -650,7 +695,6 @@ function onDragStart(e: PointerEvent) {
                         </div>
                       </UFormField>
                     </div>
-                  </div>
                   <div class="text-xs text-muted mt-2">
                     Rent you keep paying until the flat is ready — excluded from the flat price, shown in the summary.
                   </div>
