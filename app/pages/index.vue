@@ -196,16 +196,6 @@ function onDragStart(e: PointerEvent) {
                 :label="p.name"
                 @click="activeId = p.id"
               />
-            <UButton
-              to="/guide"
-              variant="outline"
-              color="neutral"
-              size="sm"
-              icon="i-ph-book-open-text"
-              aria-label="Home buying guide"
-            >
-              <span class="hidden sm:inline">Guide</span>
-            </UButton>
             <UDropdownMenu
                 :items="[[
                   { label: 'Duplicate', icon: 'i-ph-copy', onSelect: () => duplicateProject(p.id) },
@@ -232,6 +222,16 @@ function onDragStart(e: PointerEvent) {
                names span the full header width as they did before. `ml-auto`
                only matters below sm, where the tabs are on their own row. -->
           <div class="flex items-center gap-2 shrink-0 ml-auto sm:ml-0">
+            <UButton
+              to="/guide"
+              variant="outline"
+              color="neutral"
+              size="sm"
+              icon="i-ph-book-open-text"
+              aria-label="Home buying guide"
+            >
+              <span class="hidden sm:inline">Guide</span>
+            </UButton>
             <UButton
               :variant="dirty ? 'solid' : 'outline'"
               :color="dirty ? 'success' : 'neutral'"
