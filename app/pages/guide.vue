@@ -193,7 +193,7 @@ function embedSrc(url: string) {
         <div class="flex items-center justify-between gap-4 flex-wrap">
           <div class="flex items-center gap-3">
             <div class="flex items-center justify-center size-11 rounded-xl bg-primary text-inverted shrink-0">
-              <UIcon name="i-ph-book-open-text" class="size-6" />
+              <UIcon name="i-ph-book-open-text" class="size-5 sm:size-6" />
             </div>
             <div>
               <span class="text-sm font-semibold tracking-wide text-muted uppercase">FlatBuy</span>
@@ -206,7 +206,7 @@ function embedSrc(url: string) {
             Calculator
           </UButton>
         </div>
-        <p class="mt-3 text-sm text-muted max-w-2xl">
+        <p class="mt-3 text-xs sm:text-sm text-muted max-w-2xl">
           Tricks, checklists and traps for new-flat buyers in India — each topic opens an
           explainer you can read right here. Curated from
           <a
@@ -226,53 +226,82 @@ function embedSrc(url: string) {
           class="rounded-xl border border-default overflow-hidden"
         >
           <button
-            class="w-full flex items-center gap-3 p-4 text-left hover:bg-elevated/50 transition-colors"
+            class="w-full flex items-center gap-2.5 sm:gap-3 p-3 sm:p-4 text-left hover:bg-elevated/50 transition-colors"
             :aria-expanded="openId === cat.id"
             @click="toggle(cat.id)"
           >
             <UIcon :name="cat.icon" class="size-5 shrink-0 text-primary" />
             <div class="min-w-0 flex-1">
-              <h2 class="font-semibold text-highlighted">{{ cat.label }}</h2>
+              <h2 class="font-semibold text-highlighted text-sm sm:text-base">{{ cat.label }}</h2>
               <p class="text-xs text-muted mt-0.5">{{ cat.blurb }}</p>
             </div>
-            <UBadge color="neutral" variant="soft" size="sm">{{ cat.posts.length }}</UBadge>
+            <UBadge color="neutral" variant="soft" size="sm" class="shrink-0">{{ cat.posts.length }}</UBadge>
             <UIcon
               :name="openId === cat.id ? 'i-ph-caret-up' : 'i-ph-caret-down'"
               class="size-4 shrink-0 text-muted"
             />
           </button>
 
-          <div v-if="openId === cat.id" class="px-4 pb-4 grid gap-4 sm:grid-cols-2">
-            <ClientOnly>
-              <iframe
+          <!-- Mobile: single-column horizontal snap scroll (Instagram embeds are
+               328px wide — squeezing them under ~340px viewport crops them).
+               sm+: 2-column grid like before. -->
+          <div v-if="openId === cat.id" class="pb-4">
+            <div class="sm:hidden flex gap-3 overflow-x-auto snap-x snap-mandatory px-3 [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
+              <div
                 v-for="post in cat.posts"
                 :key="post.url"
-                :src="embedSrc(post.url)"
-                width="328"
-                height="560"
-                frameborder="0"
-                scrolling="no"
-                allowtransparency="true"
-                class="w-full max-w-[328px] rounded-lg border border-default justify-self-center"
-                :title="post.title"
-                loading="lazy"
-              />
-              <template #fallback>
-                <a
+                class="shrink-0 snap-center"
+              >
+                <ClientOnly>
+                  <iframe
+                    :src="embedSrc(post.url)"
+                    width="328"
+                    height="560"
+                    frameborder="0"
+                    scrolling="no"
+                    allowtransparency="true"
+                    class="w-[328px] rounded-lg border border-default"
+                    :title="post.title"
+                    loading="lazy"
+                  />
+                  <template #fallback>
+                    <a :href="post.url" target="_blank" rel="noopener" class="text-xs text-primary hover:underline">{{ post.title }}</a>
+                  </template>
+                </ClientOnly>
+              </div>
+            </div>
+            <div class="hidden sm:grid grid-cols-2 gap-4 px-4 pt-2">
+              <ClientOnly>
+                <iframe
                   v-for="post in cat.posts"
                   :key="post.url"
-                  :href="post.url"
-                  target="_blank"
-                  rel="noopener"
-                  class="text-xs text-primary hover:underline"
-                >{{ post.title }} — open on Instagram</a>
-              </template>
-            </ClientOnly>
+                  :src="embedSrc(post.url)"
+                  width="328"
+                  height="560"
+                  frameborder="0"
+                  scrolling="no"
+                  allowtransparency="true"
+                  class="w-full max-w-[328px] rounded-lg border border-default justify-self-center"
+                  :title="post.title"
+                  loading="lazy"
+                />
+                <template #fallback>
+                  <a
+                    v-for="post in cat.posts"
+                    :key="post.url"
+                    :href="post.url"
+                    target="_blank"
+                    rel="noopener"
+                    class="text-xs text-primary hover:underline"
+                  >{{ post.title }} — open on Instagram</a>
+                </template>
+              </ClientOnly>
+            </div>
           </div>
         </section>
       </div>
 
-      <footer class="mt-10 text-center text-xs text-muted">
+      <footer class="mt-10 px-4 text-center text-xs text-muted">
         Guides by
         <a href="https://www.instagram.com/pulse.buyright" target="_blank" rel="noopener" class="text-primary hover:underline">Pulse Insights by Buy Right</a>
         · Embedded for educational reference ·
