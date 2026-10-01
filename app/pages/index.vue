@@ -196,7 +196,17 @@ function onDragStart(e: PointerEvent) {
                 :label="p.name"
                 @click="activeId = p.id"
               />
-              <UDropdownMenu
+            <UButton
+              to="/guide"
+              variant="outline"
+              color="neutral"
+              size="sm"
+              icon="i-ph-book-open-text"
+              aria-label="Home buying guide"
+            >
+              <span class="hidden sm:inline">Guide</span>
+            </UButton>
+            <UDropdownMenu
                 :items="[[
                   { label: 'Duplicate', icon: 'i-ph-copy', onSelect: () => duplicateProject(p.id) },
                   { label: 'Remove', icon: 'i-ph-trash', color: 'error' as const, onSelect: () => deleteTarget = p },
