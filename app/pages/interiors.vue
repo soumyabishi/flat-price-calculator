@@ -78,9 +78,12 @@ const trades: Trade[] = [
               </h1>
             </div>
           </div>
-          <UButton to="/" variant="outline" color="neutral" icon="i-ph-calculator" size="sm">
-            Calculator
-          </UButton>
+          <div class="flex items-center gap-2">
+            <ColorModeButton />
+            <UButton to="/" variant="outline" color="neutral" icon="i-ph-calculator" size="sm">
+              Calculator
+            </UButton>
+          </div>
         </div>
         <p class="mt-3 text-sm text-muted max-w-2xl">
           Every interior trade gets its own guide page — costs, brands, rates and where contractors fool

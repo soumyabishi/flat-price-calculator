@@ -36,6 +36,7 @@ const kitchenBasic = kitchenItems
             </div>
           </div>
           <div class="flex gap-2">
+            <ColorModeButton />
             <UButton to="/interiors" variant="outline" color="neutral" size="sm" icon="i-ph-arrow-left">
               <span class="hidden sm:inline">Interiors</span>
             </UButton>

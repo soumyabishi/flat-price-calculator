@@ -268,6 +268,7 @@ function onDragStart(e: PointerEvent) {
             >
               <span class="hidden sm:inline">Compare</span>
             </UButton>
+            <ColorModeButton />
             <UDropdownMenu
               :items="[[
                 { label: 'Add project', icon: 'i-ph-plus', onSelect: () => addProject(`Project ${projects.length + 1}`) },

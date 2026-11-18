@@ -39,6 +39,7 @@ const carpentryTotal = carpentryItems.reduce((sum, i) => sum + i.cost, 0)
             </div>
           </div>
           <div class="flex gap-2">
+            <ColorModeButton />
             <UButton to="/interiors" variant="outline" color="neutral" size="sm" icon="i-ph-arrow-left">
               <span class="hidden sm:inline">Interiors</span>
             </UButton>
