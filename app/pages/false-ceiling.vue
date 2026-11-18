@@ -185,6 +185,135 @@ const fmt = (n: number) => `₹${Math.round(n).toLocaleString('en-IN')}`
             description="They use good boards and channels but quietly cut cost on fasteners and joint filler — cracks start appearing later. Watch those three items."
           />
         </section>
+
+        <!-- 4. Framing-time checklist -->
+        <section>
+          <h2 class="text-lg font-bold text-highlighted mb-1 flex items-center gap-2">
+            <UIcon name="i-ph-list-checks" class="size-5 text-primary" />4. Framing-time checklist — before the ceiling closes
+          </h2>
+          <p class="text-sm text-muted mb-3">
+            A ₹200 item forgotten can cost you the whole ceiling — holes everywhere, just to fix it. Run
+            this list with your contractor at framing time, room by room.
+          </p>
+          <h3 class="font-semibold text-highlighted text-sm uppercase tracking-wide mb-2">Electrical</h3>
+          <ul class="space-y-2.5">
+            <li class="flex gap-2.5 text-sm">
+              <UIcon name="i-ph-fan" class="size-5 text-primary shrink-0 mt-0.5" />
+              <span><strong class="text-highlighted">Fan rod</strong> — install it before the ceiling closes, at least 1.5–2 ft long. A short rod fixed tightly to the frame leaves the fan wobbling later.</span>
+            </li>
+            <li class="flex gap-2.5 text-sm">
+              <UIcon name="i-ph-bell" class="size-5 text-primary shrink-0 mt-0.5" />
+              <span><strong class="text-highlighted">Video doorbell wiring</strong> — decide today even if you install years later; the open wire on a finished wall ruins the look.</span>
+            </li>
+            <li class="flex gap-2.5 text-sm">
+              <UIcon name="i-ph-wifi-high" class="size-5 text-primary shrink-0 mt-0.5" />
+              <span><strong class="text-highlighted">Wi-Fi cable</strong> — call your operator (Airtel / Jio) before the ceiling and get their wiring done — not the contractor's (they'll break something). Ask the operator where range is best and fix the point.</span>
+            </li>
+            <li class="flex gap-2.5 text-sm">
+              <UIcon name="i-ph-security-camera" class="size-5 text-primary shrink-0 mt-0.5" />
+              <span><strong class="text-highlighted">CCTV</strong> — every camera needs its own cable running to the DVR box. Pre-plan the routes and which screen (living room / kitchen TV) you'll view them on.</span>
+            </li>
+            <li class="flex gap-2.5 text-sm">
+              <UIcon name="i-ph-lightbulb" class="size-5 text-primary shrink-0 mt-0.5" />
+              <span><strong class="text-highlighted">Light samples at framing time</strong> — hand your actual lights to the contractor when framing starts. Without a sample, a frame can land exactly where a light cut goes — the light goes off-centre and the symmetry is ruined.</span>
+            </li>
+            <li class="flex gap-2.5 text-sm">
+              <UIcon name="i-ph-magnet" class="size-5 text-primary shrink-0 mt-0.5" />
+              <span><strong class="text-highlighted">Magnetic track lights</strong> — need a special frame built at framing time; it cannot be added after the ceiling. Bring the track then.</span>
+            </li>
+            <li class="flex gap-2.5 text-sm">
+              <UIcon name="i-ph-swap" class="size-5 text-primary shrink-0 mt-0.5" />
+              <span><strong class="text-highlighted">Profile light grooves</strong> — the groove must be cut against your actual sample during the board/putty stage. Cut by guesswork and the profile sits loose with visible gaps and waviness.</span>
+            </li>
+          </ul>
+
+          <h3 class="font-semibold text-highlighted text-sm uppercase tracking-wide mt-5 mb-2">Ventilation, services & safety</h3>
+          <ul class="space-y-2.5">
+            <li class="flex gap-2.5 text-sm">
+              <UIcon name="i-ph-fire" class="size-5 text-primary shrink-0 mt-0.5" />
+              <span><strong class="text-highlighted">Chimney pipe route</strong> — check the route before the ceiling: a beam near the window can force a re-route through finished work. Install the pipe at framing time.</span>
+            </li>
+            <li class="flex gap-2.5 text-sm">
+              <UIcon name="i-ph-wind" class="size-5 text-primary shrink-0 mt-0.5" />
+              <span><strong class="text-highlighted">Bathroom exhaust point</strong> — don't forget the exhale point before packing the bathroom ceiling.</span>
+            </li>
+            <li class="flex gap-2.5 text-sm">
+              <UIcon name="i-ph-door-open" class="size-5 text-primary shrink-0 mt-0.5" />
+              <span><strong class="text-highlighted">Trap door for the geyser</strong> — with a covered bathroom ceiling, insist on a 2×2 ft trap door behind the geyser — or maintenance means breaking the ceiling.</span>
+            </li>
+            <li class="flex gap-2.5 text-sm">
+              <UIcon name="i-ph-flame" class="size-5 text-primary shrink-0 mt-0.5" />
+              <span><strong class="text-highlighted">Fire & safety</strong> — check sprinkler and smoke-detector locations before designing; shifting them later adds ₹5,000–6,000+ per flat.</span>
+            </li>
+            <li class="flex gap-2.5 text-sm">
+              <UIcon name="i-ph-snowflake" class="size-5 text-primary shrink-0 mt-0.5" />
+              <span><strong class="text-highlighted">AC copper piping (VRV)</strong> — plan the pipe route before finalizing the design, or a beam can force an ugly re-route through finished work.</span>
+            </li>
+            <li class="flex gap-2.5 text-sm">
+              <UIcon name="i-ph-speaker-high" class="size-5 text-primary shrink-0 mt-0.5" />
+              <span><strong class="text-highlighted">Insulation</strong> — rock wool (better) or glass wool inside the framing for sound. On a top-floor flat: an EPS sheet cuts room heat ~4°C, improves AC cooling and lowers the bill.</span>
+            </li>
+          </ul>
+
+          <h3 class="font-semibold text-highlighted text-sm uppercase tracking-wide mt-5 mb-2">Material checks with the contractor</h3>
+          <div class="overflow-x-auto rounded-xl border border-default">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-default bg-elevated/40">
+                  <th class="text-left py-2.5 px-4 font-medium text-muted">Ask for</th>
+                  <th class="text-left py-2.5 px-4 font-medium text-muted">The standard</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="border-b border-default/50">
+                  <td class="py-2.5 px-4">Channel bundle weight</td>
+                  <td class="py-2.5 px-4">Insist on the <strong>22 kg bundle</strong> — light-weight frames (16/14 kg) bend and sag within a few years</td>
+                </tr>
+                <tr class="border-b border-default/50">
+                  <td class="py-2.5 px-4">L-angle (Latti) support</td>
+                  <td class="py-2.5 px-4">Every 3–4 ft — keeps the frame rigid</td>
+                </tr>
+                <tr class="border-b border-default/50">
+                  <td class="py-2.5 px-4">Fastener size</td>
+                  <td class="py-2.5 px-4">8–10 mm</td>
+                </tr>
+                <tr>
+                  <td class="py-2.5 px-4">Screws</td>
+                  <td class="py-2.5 px-4">Gyproc brand screws for gypsum board work</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <UAlert
+            icon="i-ph-warning-circle"
+            color="error"
+            variant="soft"
+            class="mt-3"
+            title="The ₹200 rule"
+            description="A cheap-quote trap: contractors save on frame weight and skip a checklist item, and a ₹200 forgotten part later costs you thousands when the ceiling has to be broken to fix it."
+          />
+        </section>
+
+        <!-- 5. Design pro-tips -->
+        <section>
+          <h2 class="text-lg font-bold text-highlighted mb-3 flex items-center gap-2">
+            <UIcon name="i-ph-lightbulb" class="size-5 text-primary" />5. Design pro-tips
+          </h2>
+          <ul class="space-y-3">
+            <li class="flex gap-2.5 text-sm">
+              <UBadge color="primary" variant="soft" class="shrink-0 mt-0.5">1</UBadge>
+              <span><strong class="text-highlighted">Reverse cove = the best design.</strong> Leave a minimum 8-inch gap from the wall — that's what the curtain pocket needs so both curtain layers can slide past each other.</span>
+            </li>
+            <li class="flex gap-2.5 text-sm">
+              <UBadge color="primary" variant="soft" class="shrink-0 mt-0.5">2</UBadge>
+              <span><strong class="text-highlighted">Wardrobe vs ceiling clash.</strong> Check that wardrobe shutters open freely under the ceiling drop — otherwise you lose storage height or break/raise the ceiling.</span>
+            </li>
+            <li class="flex gap-2.5 text-sm">
+              <UBadge color="primary" variant="soft" class="shrink-0 mt-0.5">3</UBadge>
+              <span><strong class="text-highlighted">No light under the fan sweep.</strong> Designer fans run 4–5 ft wide — keep lights clear of the fan's swing, or the running fan makes them flicker.</span>
+            </li>
+          </ul>
+        </section>
       </div>
 
       <footer class="mt-10 text-center text-xs text-muted">
@@ -195,6 +324,13 @@ const fmt = (n: number) => `₹${Math.round(n).toLocaleString('en-IN')}`
           rel="noopener"
           class="text-primary hover:underline"
         >gypsum false ceiling video</a>
+        · Checklist from the
+        <a
+          href="https://www.youtube.com/watch?v=_S7klUYMYnE"
+          target="_blank"
+          rel="noopener"
+          class="text-primary hover:underline"
+        >ultimate false ceiling checklist video (Interior Coach)</a>
         · Indicative rates, verify quotes in your city ·
         <NuxtLink to="/interiors" class="text-primary hover:underline">All interior guides</NuxtLink>
       </footer>
