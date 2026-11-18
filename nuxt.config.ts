@@ -11,7 +11,7 @@ export default defineNuxtConfig({
   },
   modules: ['@nuxt/ui'],
   colorMode: {
-    preference: 'system',
+    preference: 'dark',
     fallback: 'dark'
   },
   fonts: {

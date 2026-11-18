@@ -223,6 +223,16 @@ function onDragStart(e: PointerEvent) {
                only matters below sm, where the tabs are on their own row. -->
           <div class="flex items-center gap-2 shrink-0 ml-auto sm:ml-0">
             <UButton
+              to="/interiors"
+              variant="outline"
+              color="neutral"
+              size="sm"
+              icon="i-ph-paint-roller"
+              aria-label="Interior works guide"
+            >
+              <span class="hidden sm:inline">Interiors</span>
+            </UButton>
+            <UButton
               to="/guide"
               variant="outline"
               color="neutral"
@@ -326,7 +336,7 @@ function onDragStart(e: PointerEvent) {
               </div>
             </div>
             <div class="flex justify-end gap-2">
-              <UButton variant="ghost" color="neutral" size="sm" @click="deleteTarget = undefined">
+              <UButton variant="ghost" color="neutral" size="sm" icon="i-ph-x" @click="deleteTarget = undefined">
                 Cancel
               </UButton>
               <UButton color="error" size="sm" icon="i-ph-trash" @click="confirmDelete">
