@@ -172,7 +172,19 @@ const fmt = (n: number) => `₹${Math.round(n).toLocaleString('en-IN')}`
             </li>
             <li class="flex gap-2.5 text-sm">
               <UIcon name="i-ph-check-circle" class="size-5 text-success shrink-0 mt-0.5" />
-              <span><strong class="text-highlighted">Channels</strong> — don't judge thick vs thin; just make sure the channels are from the same trusted brands.</span>
+              <span><strong class="text-highlighted">Channels</strong> — <strong>GI (galvanized iron), never local iron</strong>: local iron rusts within two years, GI doesn't and shrugs off humidity. Trusted brands: <strong>Gyproc</strong> (Saint-Gobain), <strong>Armstrong</strong>, <strong>Jindal</strong>.</span>
+            </li>
+            <li class="flex gap-2.5 text-sm">
+              <UIcon name="i-ph-check-circle" class="size-5 text-success shrink-0 mt-0.5" />
+              <span><strong class="text-highlighted">Channel spacing</strong> — the classic cost-cut: main channels kept more than 2–3 ft apart, angle channels beyond 1.5–2 ft. Loose frames sag and bend at the middle.</span>
+            </li>
+            <li class="flex gap-2.5 text-sm">
+              <UIcon name="i-ph-check-circle" class="size-5 text-success shrink-0 mt-0.5" />
+              <span><strong class="text-highlighted">Board thickness</strong> — minimum 12.5 mm. Thinner boards are available but bend easily.</span>
+            </li>
+            <li class="flex gap-2.5 text-sm">
+              <UIcon name="i-ph-check-circle" class="size-5 text-success shrink-0 mt-0.5" />
+              <span><strong class="text-highlighted">Wet areas need different material</strong> — never plain POP or ordinary gypsum board in bathrooms/balconies: moisture spots, sagging and fungus within a few months. Use moisture-resistant (MR grade) gypsum board, or PVC soft panels which are fully waterproof.</span>
             </li>
             <li class="flex gap-2.5 text-sm">
               <UIcon name="i-ph-check-circle" class="size-5 text-success shrink-0 mt-0.5" />
@@ -277,8 +289,8 @@ const fmt = (n: number) => `₹${Math.round(n).toLocaleString('en-IN')}`
                   <td class="py-2.5 px-4">Insist on the <strong>22 kg bundle</strong> — light-weight frames (16/14 kg) bend and sag within a few years</td>
                 </tr>
                 <tr class="border-b border-default/50">
-                  <td class="py-2.5 px-4">L-angle (Latti) support</td>
-                  <td class="py-2.5 px-4">Every 3–4 ft — keeps the frame rigid</td>
+                  <td class="py-2.5 px-4">Channel type & spacing</td>
+                  <td class="py-2.5 px-4">GI channels (Jindal / Armstrong / Gyproc); main channels every 2–3 ft, angle/L-angle every 1.5–2 ft — keeps the frame rigid</td>
                 </tr>
                 <tr class="border-b border-default/50">
                   <td class="py-2.5 px-4">Fastener size</td>
@@ -299,12 +311,63 @@ const fmt = (n: number) => `₹${Math.round(n).toLocaleString('en-IN')}`
             title="The ₹200 rule"
             description="A cheap-quote trap: contractors save on frame weight and skip a checklist item, and a ₹200 forgotten part later costs you thousands when the ceiling has to be broken to fix it."
           />
+          <UAlert
+            icon="i-ph-warning-circle"
+            color="warning"
+            variant="soft"
+            class="mt-3"
+            title="Finalize all points before starting"
+            description="Freeze the full electrical layout, AC ducting plan and chandelier/hanging-light positions before work starts, and do a walkthrough with the electrician and ceiling contractor together. One missed point after the ceiling is done = break + rebuild = double labour, double material."
+          />
         </section>
 
-        <!-- 5. Design pro-tips -->
+        <!-- 5. Height & lighting planning -->
+        <section>
+          <h2 class="text-lg font-bold text-highlighted mb-1 flex items-center gap-2">
+            <UIcon name="i-ph-arrows-down-up" class="size-5 text-primary" />5. Height & lighting planning
+          </h2>
+          <p class="text-sm text-muted mb-3">
+            Making a ceiling without calculating height is mistake #1 — the room starts feeling small and
+            claustrophobic.
+          </p>
+          <div class="grid sm:grid-cols-2 gap-4">
+            <div class="rounded-xl border border-default p-4">
+              <div class="flex items-center gap-2 mb-2">
+                <UIcon name="i-ph-arrows-vertical" class="size-5 text-primary" />
+                <h3 class="font-semibold text-highlighted">Height rules</h3>
+              </div>
+              <ul class="space-y-2 text-sm text-muted">
+                <li>Clear height after the false ceiling should stay <strong class="text-highlighted">9 ft or more</strong>.</li>
+                <li>Lights alone only need a <strong class="text-highlighted">4–7 inch</strong> gap.</li>
+                <li>Cassette AC needs extra: <strong class="text-highlighted">9–10 in</strong> for one-way, <strong class="text-highlighted">14 in</strong> for four-way — keep the rest of the room at full height.</li>
+                <li>Already at ~9 ft? Do the ceiling <strong class="text-highlighted">only on the periphery</strong> so the centre volume stays open. The fan hangs ~1 ft below the ceiling — at 8 ft clear height a tall person feels it falling on their head.</li>
+              </ul>
+            </div>
+            <div class="rounded-xl border border-default p-4">
+              <div class="flex items-center gap-2 mb-2">
+                <UIcon name="i-ph-lightbulb" class="size-5 text-primary" />
+                <h3 class="font-semibold text-highlighted">Lighting rules</h3>
+              </div>
+              <ul class="space-y-2 text-sm text-muted">
+                <li>COB every foot = a bright box: more heat, higher power bill. <strong class="text-highlighted">Panel + COB lights need 5–7 ft average spacing</strong>.</li>
+                <li>Layer the colour temperature: <strong class="text-highlighted">4000–6000 K</strong> for area lighting as per comfort, <strong class="text-highlighted">3000 K warm white</strong> for mood and task lights.</li>
+              </ul>
+            </div>
+          </div>
+          <UAlert
+            icon="i-ph-lightbulb"
+            color="primary"
+            variant="soft"
+            class="mt-3"
+            title="Keep the design simple"
+            description="Don't clutter the ceiling with multiple design elements — it feels new for four days and bores you in the long run. Simple, minimal designs stay timeless."
+          />
+        </section>
+
+        <!-- 6. Design pro-tips -->
         <section>
           <h2 class="text-lg font-bold text-highlighted mb-3 flex items-center gap-2">
-            <UIcon name="i-ph-lightbulb" class="size-5 text-primary" />5. Design pro-tips
+            <UIcon name="i-ph-lightbulb" class="size-5 text-primary" />6. Design pro-tips
           </h2>
           <ul class="space-y-3">
             <li class="flex gap-2.5 text-sm">
@@ -321,13 +384,20 @@ const fmt = (n: number) => `₹${Math.round(n).toLocaleString('en-IN')}`
             </li>
           </ul>
           <p class="mt-4 text-xs text-dimmed">
-            Source: "The Ultimate False Ceiling Checklist (Don't Miss These Items)" — Interior Coach,
+            Sources: "The Ultimate False Ceiling Checklist (Don't Miss These Items)" — Interior Coach,
             <a
               href="https://www.youtube.com/watch?v=_S7klUYMYnE"
               target="_blank"
               rel="noopener"
               class="text-primary hover:underline"
-            >youtube.com/watch?v=_S7klUYMYnE</a>.
+            >youtube.com/watch?v=_S7klUYMYnE</a>
+            · "Don't make these 5 mistakes while making a false ceiling",
+            <a
+              href="https://www.youtube.com/watch?v=aY-CIlCG-is"
+              target="_blank"
+              rel="noopener"
+              class="text-primary hover:underline"
+            >youtube.com/watch?v=aY-CIlCG-is</a>.
           </p>
         </section>
       </div>
@@ -347,6 +417,13 @@ const fmt = (n: number) => `₹${Math.round(n).toLocaleString('en-IN')}`
           rel="noopener"
           class="text-primary hover:underline"
         >ultimate false ceiling checklist video (Interior Coach)</a>
+        · 5 mistakes from the
+        <a
+          href="https://www.youtube.com/watch?v=aY-CIlCG-is"
+          target="_blank"
+          rel="noopener"
+          class="text-primary hover:underline"
+        >false ceiling mistakes video</a>
         · Indicative rates, verify quotes in your city ·
         <NuxtLink to="/interiors" class="text-primary hover:underline">All interior guides</NuxtLink>
       </footer>
