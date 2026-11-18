@@ -109,10 +109,45 @@ const openSection = ref()
               <td class="py-2.5 px-4 text-muted">₹95–100 / sq ft</td>
               <td class="py-2.5 px-4 text-right tabular-num">{{ fmt(area * 95) }}</td>
             </tr>
+            <tr class="border-b border-default/50 text-muted">
+              <td class="py-1.5 px-4 pl-8 text-xs">· Labour</td>
+              <td class="py-1.5 px-4 text-xs">₹90 / point</td>
+              <td class="py-1.5 px-4 text-right text-xs text-dimmed">&mdash;</td>
+            </tr>
+            <tr class="border-b border-default/50 text-muted">
+              <td class="py-1.5 px-4 pl-8 text-xs">· Wiring & piping</td>
+              <td class="py-1.5 px-4 text-xs">₹340 / point</td>
+              <td class="py-1.5 px-4 text-right text-xs text-dimmed">&mdash;</td>
+            </tr>
+            <tr class="border-b border-default/50 text-muted">
+              <td class="py-1.5 px-4 pl-8 text-xs">· LED light</td>
+              <td class="py-1.5 px-4 text-xs">₹220 / piece</td>
+              <td class="py-1.5 px-4 text-right text-xs text-dimmed">&mdash;</td>
+            </tr>
+            <tr class="border-b border-default/50 text-muted">
+              <td class="py-1.5 px-4 pl-8 text-xs">· LED strip light</td>
+              <td class="py-1.5 px-4 text-xs">₹100 / metre</td>
+              <td class="py-1.5 px-4 text-right text-xs text-dimmed">&mdash;</td>
+            </tr>
             <tr class="border-b border-default/50">
               <td class="py-2.5 px-4">Painting — 1 primer + 1 paint coat</td>
               <td class="py-2.5 px-4 text-muted">~₹18 / sq ft</td>
               <td class="py-2.5 px-4 text-right tabular-num">{{ fmt(area * 18) }}</td>
+            </tr>
+            <tr class="border-b border-default/50 text-muted">
+              <td class="py-1.5 px-4 pl-8 text-xs">· Primer (covers ~200 sq ft)</td>
+              <td class="py-1.5 px-4 text-xs">₹250 / litre</td>
+              <td class="py-1.5 px-4 text-right text-xs text-dimmed">&mdash;</td>
+            </tr>
+            <tr class="border-b border-default/50 text-muted">
+              <td class="py-1.5 px-4 pl-8 text-xs">· Putty (covers 14–16 sq ft)</td>
+              <td class="py-1.5 px-4 text-xs">₹55 / kg</td>
+              <td class="py-1.5 px-4 text-right text-xs text-dimmed">&mdash;</td>
+            </tr>
+            <tr class="border-b border-default/50 text-muted">
+              <td class="py-1.5 px-4 pl-8 text-xs">· Putty labour</td>
+              <td class="py-1.5 px-4 text-xs">₹4 / sq ft</td>
+              <td class="py-1.5 px-4 text-right text-xs text-dimmed">&mdash;</td>
             </tr>
             <tr class="bg-elevated/40">
               <td class="py-2.5 px-4 font-semibold" colspan="2">Complete cost</td>
@@ -130,55 +165,6 @@ const openSection = ref()
         title="The classic surprise"
         description="Contractors quote only the board rate. Electrical wiring inside the ceiling is always billed separately — budget for all three lines above."
       />
-
-      <!-- Rate breakdown -->
-      <h2 class="text-sm font-semibold text-muted uppercase tracking-wide mb-2">
-        Line-by-line rates
-      </h2>
-      <div class="grid sm:grid-cols-2 gap-4 mb-6">
-        <div class="rounded-xl border border-default p-4">
-          <h3 class="font-semibold text-highlighted mb-2">Electrical work</h3>
-          <table class="w-full text-sm">
-            <tbody>
-              <tr class="border-b border-default/50">
-                <td class="py-1.5">Labour</td>
-                <td class="py-1.5 text-right tabular-num text-muted">₹90 / point</td>
-              </tr>
-              <tr class="border-b border-default/50">
-                <td class="py-1.5">Wiring & piping</td>
-                <td class="py-1.5 text-right tabular-num text-muted">₹340 / point</td>
-              </tr>
-              <tr class="border-b border-default/50">
-                <td class="py-1.5">LED light</td>
-                <td class="py-1.5 text-right tabular-num text-muted">₹220 / piece</td>
-              </tr>
-              <tr>
-                <td class="py-1.5">LED strip light</td>
-                <td class="py-1.5 text-right tabular-num text-muted">₹100 / metre</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="rounded-xl border border-default p-4">
-          <h3 class="font-semibold text-highlighted mb-2">Putty & primer</h3>
-          <table class="w-full text-sm">
-            <tbody>
-              <tr class="border-b border-default/50">
-                <td class="py-1.5">Primer (covers ~200 sq ft)</td>
-                <td class="py-1.5 text-right tabular-num text-muted">₹250 / litre</td>
-              </tr>
-              <tr class="border-b border-default/50">
-                <td class="py-1.5">Putty (covers 14–16 sq ft)</td>
-                <td class="py-1.5 text-right tabular-num text-muted">₹55 / kg</td>
-              </tr>
-              <tr>
-                <td class="py-1.5">Putty labour</td>
-                <td class="py-1.5 text-right tabular-num text-muted">₹4 / sq ft</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
 
       <!-- 2. The rest — one-at-a-time accordions -->
       <h2 class="text-sm font-semibold text-muted uppercase tracking-wide mb-2">Before you sign anything</h2>
