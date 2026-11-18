@@ -131,6 +131,74 @@ const openSection = ref()
         description="Contractors quote only the board rate. Electrical wiring inside the ceiling is always billed separately — budget for all three lines above."
       />
 
+      <!-- Worked example from the video -->
+      <h2 class="text-sm font-semibold text-muted uppercase tracking-wide mb-2">
+        Worked example from the video — 10×10 room, 12 electrical points
+      </h2>
+      <div class="grid sm:grid-cols-2 gap-4 mb-6">
+        <div class="rounded-xl border border-default p-4">
+          <h3 class="font-semibold text-highlighted mb-2">Electrical work</h3>
+          <table class="w-full text-sm">
+            <tbody>
+              <tr class="border-b border-default/50">
+                <td class="py-1.5">Labour</td>
+                <td class="py-1.5 text-right text-muted">12 × ₹90</td>
+                <td class="py-1.5 text-right tabular-num">₹1,080</td>
+              </tr>
+              <tr class="border-b border-default/50">
+                <td class="py-1.5">Wiring & piping</td>
+                <td class="py-1.5 text-right text-muted">12 × ₹340</td>
+                <td class="py-1.5 text-right tabular-num">₹4,080</td>
+              </tr>
+              <tr class="border-b border-default/50">
+                <td class="py-1.5">LED lights</td>
+                <td class="py-1.5 text-right text-muted">12 × ₹220</td>
+                <td class="py-1.5 text-right tabular-num">₹2,640</td>
+              </tr>
+              <tr class="border-b border-default/50">
+                <td class="py-1.5">LED strip</td>
+                <td class="py-1.5 text-right text-muted">10 m × ₹100</td>
+                <td class="py-1.5 text-right tabular-num">₹1,000</td>
+              </tr>
+              <tr>
+                <td class="py-1.5 font-semibold" colspan="2">Total electrical</td>
+                <td class="py-1.5 text-right tabular-num font-bold text-highlighted">₹8,800</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="rounded-xl border border-default p-4">
+          <h3 class="font-semibold text-highlighted mb-2">Putty & primer</h3>
+          <table class="w-full text-sm">
+            <tbody>
+              <tr class="border-b border-default/50">
+                <td class="py-1.5">Primer (1 L covers ~200 sq ft)</td>
+                <td class="py-1.5 text-right text-muted">1 L × ₹250</td>
+                <td class="py-1.5 text-right tabular-num">₹250</td>
+              </tr>
+              <tr class="border-b border-default/50">
+                <td class="py-1.5">Putty material (1 kg covers 14–16 sq ft)</td>
+                <td class="py-1.5 text-right text-muted">13 kg × ₹55</td>
+                <td class="py-1.5 text-right tabular-num">₹715</td>
+              </tr>
+              <tr class="border-b border-default/50">
+                <td class="py-1.5">Putty labour</td>
+                <td class="py-1.5 text-right text-muted">₹4/sq ft</td>
+                <td class="py-1.5 text-right tabular-num">₹716</td>
+              </tr>
+              <tr>
+                <td class="py-1.5 font-semibold" colspan="2">Total painting</td>
+                <td class="py-1.5 text-right tabular-num font-bold text-highlighted">₹1,431</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="mt-2 text-xs text-dimmed">
+            Putty quantities follow the video's example area (179 sq ft incl. design border); scale by your
+            actual billable area.
+          </p>
+        </div>
+      </div>
+
       <!-- 2. The rest — one-at-a-time accordions -->
       <h2 class="text-sm font-semibold text-muted uppercase tracking-wide mb-2">Before you sign anything</h2>
       <UAccordion
