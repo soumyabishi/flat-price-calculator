@@ -39,13 +39,20 @@ const fmt = (n: number) => `₹${Math.round(n).toLocaleString('en-IN')}`
           </div>
         </div>
         <p class="mt-3 text-sm text-muted max-w-2xl">
-          Costs, brands and the spots contractors silently cut — everything from the
+          Costs, brands and the spots contractors silently cut, from the
           <a
             href="https://www.youtube.com/watch?v=G_DU06719AI"
             target="_blank"
             rel="noopener"
             class="text-primary hover:underline"
           >gypsum false ceiling explainer</a>
+          · framing-time checklist and design tips from
+          <a
+            href="https://www.youtube.com/watch?v=_S7klUYMYnE"
+            target="_blank"
+            rel="noopener"
+            class="text-primary hover:underline"
+          >"The Ultimate False Ceiling Checklist" by Interior Coach</a>
           (unaffiliated).
         </p>
       </header>
@@ -313,6 +320,15 @@ const fmt = (n: number) => `₹${Math.round(n).toLocaleString('en-IN')}`
               <span><strong class="text-highlighted">No light under the fan sweep.</strong> Designer fans run 4–5 ft wide — keep lights clear of the fan's swing, or the running fan makes them flicker.</span>
             </li>
           </ul>
+          <p class="mt-4 text-xs text-dimmed">
+            Source: "The Ultimate False Ceiling Checklist (Don't Miss These Items)" — Interior Coach,
+            <a
+              href="https://www.youtube.com/watch?v=_S7klUYMYnE"
+              target="_blank"
+              rel="noopener"
+              class="text-primary hover:underline"
+            >youtube.com/watch?v=_S7klUYMYnE</a>.
+          </p>
         </section>
       </div>
 
