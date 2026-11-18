@@ -161,7 +161,7 @@ const fmt = (n: number) => `₹${Math.round(n).toLocaleString('en-IN')}`
           <ul class="space-y-2.5">
             <li class="flex gap-2.5 text-sm">
               <UIcon name="i-ph-check-circle" class="size-5 text-success shrink-0 mt-0.5" />
-              <span><strong class="text-highlighted">Boards</strong> — good quality only, otherwise they absorb dampness and get damaged. Trusted brands: <strong>Giprock</strong> (Saint-Gobain), <strong>Armstrong</strong>, <strong>USG Boral</strong>, <strong>India Gypsum</strong>.</span>
+              <span><strong class="text-highlighted">Boards</strong> — good quality only, otherwise they absorb dampness and get damaged. Trusted brands: <strong>Gyproc</strong> (Saint-Gobain), <strong>Armstrong</strong>, <strong>USG Boral</strong>, <strong>India Gypsum</strong>.</span>
             </li>
             <li class="flex gap-2.5 text-sm">
               <UIcon name="i-ph-check-circle" class="size-5 text-success shrink-0 mt-0.5" />
@@ -169,7 +169,7 @@ const fmt = (n: number) => `₹${Math.round(n).toLocaleString('en-IN')}`
             </li>
             <li class="flex gap-2.5 text-sm">
               <UIcon name="i-ph-check-circle" class="size-5 text-success shrink-0 mt-0.5" />
-              <span><strong class="text-highlighted">Fasteners & screws</strong> — the entire ceiling hangs on these. Cheap ones are the silent killer.</span>
+              <span><strong class="text-highlighted">Fasteners & screws</strong> — the entire ceiling hangs on these. Cheap ones are the silent killer. Trusted brands: <strong>Zebroc</strong> or <strong>Armstrong</strong>.</span>
             </li>
             <li class="flex gap-2.5 text-sm">
               <UIcon name="i-ph-check-circle" class="size-5 text-success shrink-0 mt-0.5" />
