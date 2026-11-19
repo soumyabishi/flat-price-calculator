@@ -2,7 +2,7 @@
 useHead({
   title: 'FlatBuy — Carpenter Works Guide',
   meta: [
-    { name: 'description', content: 'Plywood wardrobe cost guide 2025: labor and material rates, plywood grades (MR/BWR/BWP), laminate vs acrylic finishes, branded hardware, design planning and common mistakes.' },
+    { name: 'description', content: 'Plywood wardrobe cost guide 2025: labor and material rates, plywood grades (MR/BWR/BWP), shutter design mistakes — material, measurements, colors, handles — laminate vs acrylic finishes and branded hardware.' },
   ],
 })
 
@@ -80,11 +80,21 @@ const plywoodExample = computed(() => Math.round(42 * 900))
               </tbody>
             </table>
           </div>
+          <ul class="mt-3 space-y-2.5 text-sm">
+            <li class="flex gap-2.5">
+              <UIcon name="i-ph-lightbulb" class="size-5 text-primary shrink-0 mt-0.5" />
+              <span><strong class="text-highlighted">Laminate thickness:</strong> inside of the shutter — 8 mm is fine, but always use more than 1 mm on the outer side.</span>
+            </li>
+            <li class="flex gap-2.5">
+              <UIcon name="i-ph-lightbulb" class="size-5 text-primary shrink-0 mt-0.5" />
+              <span><strong class="text-highlighted">Loft shutters:</strong> avoid darker colors — they get highlighted too much.</span>
+            </li>
+          </ul>
         </section>
 
         <section>
           <h2 class="text-lg font-bold text-highlighted mb-3 flex items-center gap-2">
-            <UIcon name="i-ph-stack" class="size-5 text-primary" />Plywood grades — the #1 mistake
+            <UIcon name="i-ph-gear" class="size-5 text-primary" />Hardware — never compromise here
           </h2>
           <div class="overflow-x-auto rounded-xl border border-default mb-3">
             <table class="w-full text-sm">
@@ -121,7 +131,7 @@ const plywoodExample = computed(() => Math.round(42 * 900))
             </li>
             <li class="flex gap-2.5">
               <UIcon name="i-ph-lightbulb" class="size-5 text-primary shrink-0 mt-0.5" />
-              <span><strong class="text-highlighted">Pro tip — high-quality ply body, MDF shutters.</strong> MDF is lighter, so it reduces stress on hinges and prevents sagging — plus it gives a very smooth finish when laminated or acrylic is applied.</span>
+              <span><strong class="text-highlighted">BWP ply or HDHMR carcass — but blockboard shutters.</strong> Shutters are a moving part (opened and closed every day); 7–8 ft plywood shutters bend over time, blockboard won't. For grooves or embossed designs, add MDF over the blockboard.</span>
             </li>
             <li class="flex gap-2.5">
               <UIcon name="i-ph-check-circle" class="size-5 text-success shrink-0 mt-0.5" />
@@ -161,12 +171,128 @@ const plywoodExample = computed(() => Math.round(42 * 900))
 
         <section>
           <h2 class="text-lg font-bold text-highlighted mb-3 flex items-center gap-2">
+            <UIcon name="i-ph-door" class="size-5 text-primary" />Shutter design — 5 mistakes that make an expensive wardrobe look cheap
+          </h2>
+          <p class="text-sm text-muted mb-4">
+            90% of a wardrobe's visible part is its shutters. Best plywood, branded hardware and premium
+            finishes still won't look luxurious if these five mistakes creep in.
+          </p>
+
+          <div class="space-y-6">
+            <div>
+              <h3 class="font-semibold text-highlighted mb-2 text-sm uppercase tracking-wide">1 · Shutter material</h3>
+              <ul class="space-y-2.5 text-sm">
+                <li class="flex gap-2.5">
+                  <UIcon name="i-ph-warning-circle" class="size-5 text-warning shrink-0 mt-0.5" />
+                  <span><strong class="text-highlighted">Don't make shutters in the same material as the carcass.</strong> Shutters are a moving part — opened and closed every day.</span>
+                </li>
+                <li class="flex gap-2.5">
+                  <UIcon name="i-ph-check-circle" class="size-5 text-success shrink-0 mt-0.5" />
+                  <span><strong class="text-highlighted">Shutters always in blockboard:</strong> 7–8 ft plywood shutters bend over time; blockboard doesn't. Grooves or embossed designs? Add MDF on top of the blockboard to achieve that look.</span>
+                </li>
+                <li class="flex gap-2.5">
+                  <UIcon name="i-ph-warning-circle" class="size-5 text-warning shrink-0 mt-0.5" />
+                  <span><strong class="text-highlighted">Never particle board</strong> — that's what cheap online furniture is made of.</span>
+                </li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 class="font-semibold text-highlighted mb-2 text-sm uppercase tracking-wide">2 · Measurements</h3>
+              <ul class="space-y-2.5 text-sm">
+                <li class="flex gap-2.5">
+                  <UIcon name="i-ph-ruler" class="size-5 text-primary shrink-0 mt-0.5" />
+                  <span><strong class="text-highlighted">Max shutter height 8 ft.</strong> All materials — ply to laminate — come in 8 ft standard size; above that, joints appear that don't look good.</span>
+                </li>
+                <li class="flex gap-2.5">
+                  <UIcon name="i-ph-check-circle" class="size-5 text-success shrink-0 mt-0.5" />
+                  <span><strong class="text-highlighted">Floor-to-ceiling wardrobe?</strong> Add 8 ft (or lintel-level) shutters with a loft on top — or drawers at the bottom with 8 ft shutters above them.</span>
+                </li>
+                <li class="flex gap-2.5">
+                  <UIcon name="i-ph-check-circle" class="size-5 text-success shrink-0 mt-0.5" />
+                  <span><strong class="text-highlighted">Draw straighteners behind 7–8 ft shutters.</strong> Long shutters risk bending in the long run — this small thing doubles the shutter's life.</span>
+                </li>
+                <li class="flex gap-2.5">
+                  <UIcon name="i-ph-ruler" class="size-5 text-primary shrink-0 mt-0.5" />
+                  <span><strong class="text-highlighted">Width — openable shutters max 2 ft</strong> (beyond that they get heavy and load the hinges). Best proportion: <strong class="text-highlighted">18–22 inches</strong>.</span>
+                </li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 class="font-semibold text-highlighted mb-2 text-sm uppercase tracking-wide">3 · Wrong color & design</h3>
+              <ul class="space-y-2.5 text-sm">
+                <li class="flex gap-2.5">
+                  <UIcon name="i-ph-palette" class="size-5 text-primary shrink-0 mt-0.5" />
+                  <span><strong class="text-highlighted">Small room → light colors, minimal design.</strong> A dark full-height wardrobe makes a small bedroom look even smaller.</span>
+                </li>
+                <li class="flex gap-2.5">
+                  <UIcon name="i-ph-warning-circle" class="size-5 text-warning shrink-0 mt-0.5" />
+                  <span><strong class="text-highlighted">Don't over-design the shutters.</strong> 3–4 groove types + 2 colors + glass + patterns all together looks like a sweet shop, not a showroom.</span>
+                </li>
+                <li class="flex gap-2.5">
+                  <UIcon name="i-ph-check-circle" class="size-5 text-success shrink-0 mt-0.5" />
+                  <span><strong class="text-highlighted">Pick one design language:</strong> clean minimal shutters with handles · plain shutters with creative handles · molding with PU finish · frosted glass with aluminum profile. One theme across the whole wardrobe.</span>
+                </li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 class="font-semibold text-highlighted mb-2 text-sm uppercase tracking-wide">4 · Handles — the most underrated decision</h3>
+              <div class="overflow-x-auto rounded-xl border border-default">
+                <table class="w-full text-sm">
+                  <thead>
+                    <tr class="border-b border-default bg-elevated/40">
+                      <th class="text-left py-2.5 px-4 font-medium text-muted">Type</th>
+                      <th class="text-left py-2.5 px-4 font-medium text-muted">What to know</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="border-b border-default/50">
+                      <td class="py-2.5 px-4 font-medium">Regular handles</td>
+                      <td class="py-2.5 px-4 text-muted">Most affordable — but pick slim-profile modern handles, not old chunky ones</td>
+                    </tr>
+                    <tr class="border-b border-default/50">
+                      <td class="py-2.5 px-4 font-medium">Profile / G-profile handles</td>
+                      <td class="py-2.5 px-4 text-muted">Integrate into the shutter edge — best for a clean look</td>
+                    </tr>
+                    <tr>
+                      <td class="py-2.5 px-4 font-medium">Push-to-open</td>
+                      <td class="py-2.5 px-4 text-muted">No handles at all — looks most premium, but the mechanism quality must be good or it fails within 2 years</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div>
+              <h3 class="font-semibold text-highlighted mb-2 text-sm uppercase tracking-wide">5 · Room coordination</h3>
+              <ul class="space-y-2.5 text-sm">
+                <li class="flex gap-2.5">
+                  <UIcon name="i-ph-arrows-horizontal" class="size-5 text-primary shrink-0 mt-0.5" />
+                  <span><strong class="text-highlighted">Keep at least 3 ft between the bed and wardrobe</strong> for openable shutters. If not possible, take sliding shutters — they work in as little as 2.5 ft.</span>
+                </li>
+                <li class="flex gap-2.5">
+                  <UIcon name="i-ph-check-circle" class="size-5 text-success shrink-0 mt-0.5" />
+                  <span><strong class="text-highlighted">Low natural light?</strong> Use tinted, fluted or lacquered glass shutters — the reflection makes the room look bigger and brighter (tinted black, bronze, fluted, lacquered — used in many projects and it looks amazing).</span>
+                </li>
+                <li class="flex gap-2.5">
+                  <UIcon name="i-ph-check-circle" class="size-5 text-success shrink-0 mt-0.5" />
+                  <span><strong class="text-highlighted">Coordinate colors with the wall and bed.</strong> The wardrobe is not a separate entity — it's the biggest furniture piece in the room.</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <h2 class="text-lg font-bold text-highlighted mb-3 flex items-center gap-2">
             <UIcon name="i-ph-gear" class="size-5 text-primary" />Hardware — never compromise here
           </h2>
           <ul class="space-y-2.5 text-sm">
             <li class="flex gap-2.5">
               <UIcon name="i-ph-check-circle" class="size-5 text-success shrink-0 mt-0.5" />
-              <span><strong class="text-highlighted">Branded hinges:</strong> Hafele, Hettich and other reputed brands run ₹300–500. Hinges bear the most load from frequent opening and closing — low-quality ones wear out quickly.</span>
+              <span><strong class="text-highlighted">Branded hinges and channels:</strong> Hafele, Hettich, Ebco, Sleek, Ozone — shutters are used every day and cheap hardware fails first. Branded ones run ₹300–500; low-quality ones wear out quickly.</span>
             </li>
             <li class="flex gap-2.5">
               <UIcon name="i-ph-warning-circle" class="size-5 text-warning shrink-0 mt-0.5" />
